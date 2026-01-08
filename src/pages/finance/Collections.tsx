@@ -23,7 +23,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { Trash2 } from 'lucide-react';
+import { Edit, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
 
 interface CustomerPayment {
@@ -47,6 +47,7 @@ export default function Collections() {
   const queryClient = useQueryClient();
   const [search, setSearch] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [editingPayment, setEditingPayment] = useState<CustomerPayment | null>(null);
 
   const canEdit = role === 'super_admin' || role === 'manager' || role === 'data_entry';
 
@@ -130,6 +131,32 @@ export default function Collections() {
     },
   });
 
+  const updateMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: typeof formData }) => {
+      const { error } = await supabase
+        .from('customer_payments')
+        .update({
+          customer_id: data.customer_id || null,
+          invoice_id: data.invoice_id || null,
+          payment_date: data.payment_date,
+          amount: parseFloat(data.amount) || 0,
+          payment_mode: data.payment_mode,
+          reference_number: data.reference_number || null,
+          notes: data.notes || null,
+        })
+        .eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['customer-payments'] });
+      toast({ title: 'Collection updated successfully' });
+      handleCloseDialog();
+    },
+    onError: (error: Error) => {
+      toast({ title: 'Error updating collection', description: error.message, variant: 'destructive' });
+    },
+  });
+
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase.from('customer_payments').delete().eq('id', id);
@@ -146,6 +173,7 @@ export default function Collections() {
 
   const handleCloseDialog = () => {
     setIsDialogOpen(false);
+    setEditingPayment(null);
     setFormData({
       customer_id: '',
       invoice_id: '',
@@ -157,9 +185,27 @@ export default function Collections() {
     });
   };
 
+  const handleEdit = (payment: CustomerPayment) => {
+    setEditingPayment(payment);
+    setFormData({
+      customer_id: payment.customer_id || '',
+      invoice_id: payment.invoice_id || '',
+      payment_date: payment.payment_date,
+      amount: String(payment.amount),
+      payment_mode: payment.payment_mode,
+      reference_number: payment.reference_number || '',
+      notes: payment.notes || '',
+    });
+    setIsDialogOpen(true);
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    createMutation.mutate(formData);
+    if (editingPayment) {
+      updateMutation.mutate({ id: editingPayment.id, data: formData });
+    } else {
+      createMutation.mutate(formData);
+    }
   };
 
   const filteredPayments = payments.filter(
@@ -195,9 +241,14 @@ export default function Collections() {
       header: 'Actions',
       cell: (p) =>
         canEdit && (
-          <Button size="icon" variant="ghost" onClick={() => deleteMutation.mutate(p.id)}>
-            <Trash2 className="h-4 w-4" />
-          </Button>
+          <div className="flex gap-2">
+            <Button size="icon" variant="ghost" onClick={() => handleEdit(p)}>
+              <Edit className="h-4 w-4" />
+            </Button>
+            <Button size="icon" variant="ghost" onClick={() => deleteMutation.mutate(p.id)}>
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          </div>
         ),
     },
   ];
@@ -225,7 +276,7 @@ export default function Collections() {
       <Dialog open={isDialogOpen} onOpenChange={handleCloseDialog}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>Record Collection</DialogTitle>
+            <DialogTitle>{editingPayment ? 'Edit Collection' : 'Record Collection'}</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
@@ -305,7 +356,7 @@ export default function Collections() {
             </div>
             <div className="flex justify-end gap-2">
               <Button type="button" variant="outline" onClick={handleCloseDialog}>Cancel</Button>
-              <Button type="submit">Record</Button>
+              <Button type="submit">{editingPayment ? 'Update' : 'Record'}</Button>
             </div>
           </form>
         </DialogContent>
