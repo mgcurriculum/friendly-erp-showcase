@@ -10,6 +10,7 @@ import Dashboard from "./pages/Dashboard";
 import KEILOperations from "./pages/KEILOperations";
 import SMSContracts from "./pages/SMSContracts";
 import Employees from "./pages/masters/Employees";
+import Vehicles from "./pages/masters/Vehicles";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -26,6 +27,7 @@ const App = () => (
             <Route path="/auth" element={<Auth />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/masters/employees" element={<Employees />} />
+            <Route path="/masters/vehicles" element={<Vehicles />} />
             <Route path="/keil" element={<KEILOperations />} />
             <Route path="/sms" element={<SMSContracts />} />
             <Route path="*" element={<NotFound />} />
