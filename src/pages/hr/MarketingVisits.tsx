@@ -66,11 +66,11 @@ export default function MarketingVisits() {
     queryKey: ['marketing-visits'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('marketing_visits')
+        .from('marketing_visits' as any)
         .select('*, employees(code, name)')
         .order('visit_date', { ascending: false });
       if (error) throw error;
-      return data as MarketingVisit[];
+      return (data || []) as unknown as MarketingVisit[];
     },
   });
 
@@ -89,7 +89,7 @@ export default function MarketingVisits() {
 
   const createMutation = useMutation({
     mutationFn: async (data: typeof formData) => {
-      const { error } = await supabase.from('marketing_visits').insert({
+      const { error } = await supabase.from('marketing_visits' as any).insert({
         visit_date: data.visit_date,
         employee_id: data.employee_id || null,
         customer_name: data.customer_name,
@@ -115,7 +115,7 @@ export default function MarketingVisits() {
   const updateMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: typeof formData }) => {
       const { error } = await supabase
-        .from('marketing_visits')
+        .from('marketing_visits' as any)
         .update({
           visit_date: data.visit_date,
           employee_id: data.employee_id || null,
@@ -142,7 +142,7 @@ export default function MarketingVisits() {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from('marketing_visits').delete().eq('id', id);
+      const { error } = await supabase.from('marketing_visits' as any).delete().eq('id', id);
       if (error) throw error;
     },
     onSuccess: () => {

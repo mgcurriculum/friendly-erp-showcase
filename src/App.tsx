@@ -19,19 +19,29 @@ import SalesInvoices from "./pages/sales/SalesInvoices";
 import CustomerOrders from "./pages/sales/CustomerOrders";
 import Deliveries from "./pages/sales/Deliveries";
 import ProductionEntry from "./pages/production/ProductionEntry";
+import CuttingSealing from "./pages/production/CuttingSealing";
+import Packing from "./pages/production/Packing";
 import MaterialConsumption from "./pages/production/MaterialConsumption";
 import Wastage from "./pages/production/Wastage";
 import PurchaseOrders from "./pages/inventory/PurchaseOrders";
 import Purchases from "./pages/inventory/Purchases";
+import PurchaseReturns from "./pages/inventory/PurchaseReturns";
 import StockReport from "./pages/inventory/StockReport";
 import Collections from "./pages/finance/Collections";
 import Payments from "./pages/finance/Payments";
 import PettyCash from "./pages/finance/PettyCash";
 import Attendance from "./pages/hr/Attendance";
+import MarketingVisits from "./pages/hr/MarketingVisits";
 import SalesReport from "./pages/reports/SalesReport";
+import PurchaseReport from "./pages/reports/PurchaseReport";
+import ProductionReport from "./pages/reports/ProductionReport";
+import AttendanceReport from "./pages/reports/AttendanceReport";
+import Scorecard from "./pages/reports/Scorecard";
 import StockReportPage from "./pages/reports/StockReport";
 import CollectionReport from "./pages/reports/CollectionReport";
 import SystemSettings from "./pages/settings/SystemSettings";
+import UserManagement from "./pages/settings/UserManagement";
+import SalesReturns from "./pages/sales/SalesReturns";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -56,28 +66,38 @@ const App = () => (
             <Route path="/masters/customers" element={<Customers />} />
             {/* Production */}
             <Route path="/production/entry" element={<ProductionEntry />} />
+            <Route path="/production/cutting-sealing" element={<CuttingSealing />} />
+            <Route path="/production/packing" element={<Packing />} />
             <Route path="/production/consumption" element={<MaterialConsumption />} />
             <Route path="/production/wastage" element={<Wastage />} />
             {/* Inventory */}
             <Route path="/inventory/purchase-orders" element={<PurchaseOrders />} />
             <Route path="/inventory/purchases" element={<Purchases />} />
+            <Route path="/inventory/purchase-returns" element={<PurchaseReturns />} />
             <Route path="/inventory/stock" element={<StockReport />} />
             {/* Sales */}
             <Route path="/sales/orders" element={<CustomerOrders />} />
             <Route path="/sales/invoices" element={<SalesInvoices />} />
             <Route path="/sales/deliveries" element={<Deliveries />} />
+            <Route path="/sales/returns" element={<SalesReturns />} />
             {/* Finance */}
             <Route path="/finance/collections" element={<Collections />} />
             <Route path="/finance/payments" element={<Payments />} />
             <Route path="/finance/petty-cash" element={<PettyCash />} />
             {/* HR */}
             <Route path="/hr/attendance" element={<Attendance />} />
+            <Route path="/hr/marketing-visits" element={<MarketingVisits />} />
             {/* Reports */}
             <Route path="/reports/sales" element={<SalesReport />} />
+            <Route path="/reports/purchase" element={<PurchaseReport />} />
+            <Route path="/reports/production" element={<ProductionReport />} />
+            <Route path="/reports/attendance" element={<AttendanceReport />} />
+            <Route path="/reports/scorecard" element={<Scorecard />} />
             <Route path="/reports/stock" element={<StockReportPage />} />
             <Route path="/reports/collection" element={<CollectionReport />} />
             {/* Settings */}
             <Route path="/settings/system" element={<SystemSettings />} />
+            <Route path="/settings/users" element={<UserManagement />} />
             {/* External */}
             <Route path="/keil" element={<KEILOperations />} />
             <Route path="/sms" element={<SMSContracts />} />
