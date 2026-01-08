@@ -42,6 +42,7 @@ import AttendanceReport from "./pages/reports/AttendanceReport";
 import Scorecard from "./pages/reports/Scorecard";
 import StockReportPage from "./pages/reports/StockReport";
 import CollectionReport from "./pages/reports/CollectionReport";
+import KEILCollectionReport from "./pages/reports/KEILCollectionReport";
 import SystemSettings from "./pages/settings/SystemSettings";
 import UserManagement from "./pages/settings/UserManagement";
 import SalesReturns from "./pages/sales/SalesReturns";
@@ -98,6 +99,7 @@ const App = () => (
             <Route path="/reports/scorecard" element={<Scorecard />} />
             <Route path="/reports/stock" element={<StockReportPage />} />
             <Route path="/reports/collection" element={<CollectionReport />} />
+            <Route path="/reports/keil-collection" element={<KEILCollectionReport />} />
             {/* Settings */}
             <Route path="/settings/system" element={<SystemSettings />} />
             <Route path="/settings/users" element={<UserManagement />} />
