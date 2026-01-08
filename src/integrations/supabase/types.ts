@@ -483,6 +483,253 @@ export type Database = {
         }
         Relationships: []
       }
+      keil_collection_items: {
+        Row: {
+          bags_count: number | null
+          collection_id: string | null
+          collection_time: string | null
+          created_at: string
+          hce_id: string | null
+          id: string
+          remarks: string | null
+          waste_type: string | null
+          weight: number | null
+        }
+        Insert: {
+          bags_count?: number | null
+          collection_id?: string | null
+          collection_time?: string | null
+          created_at?: string
+          hce_id?: string | null
+          id?: string
+          remarks?: string | null
+          waste_type?: string | null
+          weight?: number | null
+        }
+        Update: {
+          bags_count?: number | null
+          collection_id?: string | null
+          collection_time?: string | null
+          created_at?: string
+          hce_id?: string | null
+          id?: string
+          remarks?: string | null
+          waste_type?: string | null
+          weight?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "keil_collection_items_collection_id_fkey"
+            columns: ["collection_id"]
+            isOneToOne: false
+            referencedRelation: "keil_collections"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "keil_collection_items_hce_id_fkey"
+            columns: ["hce_id"]
+            isOneToOne: false
+            referencedRelation: "keil_hce"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      keil_collections: {
+        Row: {
+          collection_date: string
+          collection_number: string
+          created_at: string
+          created_by: string | null
+          driver_id: string | null
+          end_km: number | null
+          end_time: string | null
+          helper_id: string | null
+          id: string
+          notes: string | null
+          route_id: string | null
+          start_km: number | null
+          start_time: string | null
+          status: string | null
+          total_bags: number | null
+          total_weight: number | null
+          updated_at: string
+          vehicle_id: string | null
+        }
+        Insert: {
+          collection_date?: string
+          collection_number: string
+          created_at?: string
+          created_by?: string | null
+          driver_id?: string | null
+          end_km?: number | null
+          end_time?: string | null
+          helper_id?: string | null
+          id?: string
+          notes?: string | null
+          route_id?: string | null
+          start_km?: number | null
+          start_time?: string | null
+          status?: string | null
+          total_bags?: number | null
+          total_weight?: number | null
+          updated_at?: string
+          vehicle_id?: string | null
+        }
+        Update: {
+          collection_date?: string
+          collection_number?: string
+          created_at?: string
+          created_by?: string | null
+          driver_id?: string | null
+          end_km?: number | null
+          end_time?: string | null
+          helper_id?: string | null
+          id?: string
+          notes?: string | null
+          route_id?: string | null
+          start_km?: number | null
+          start_time?: string | null
+          status?: string | null
+          total_bags?: number | null
+          total_weight?: number | null
+          updated_at?: string
+          vehicle_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "keil_collections_driver_id_fkey"
+            columns: ["driver_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "keil_collections_helper_id_fkey"
+            columns: ["helper_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "keil_collections_route_id_fkey"
+            columns: ["route_id"]
+            isOneToOne: false
+            referencedRelation: "keil_routes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "keil_collections_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      keil_hce: {
+        Row: {
+          address: string | null
+          beds_count: number | null
+          collection_frequency: string | null
+          contact_person: string | null
+          created_at: string
+          email: string | null
+          hce_code: string
+          hce_name: string
+          hce_type: string | null
+          id: string
+          license_number: string | null
+          phone: string | null
+          route_id: string | null
+          status: string | null
+          updated_at: string
+          waste_category: string | null
+        }
+        Insert: {
+          address?: string | null
+          beds_count?: number | null
+          collection_frequency?: string | null
+          contact_person?: string | null
+          created_at?: string
+          email?: string | null
+          hce_code: string
+          hce_name: string
+          hce_type?: string | null
+          id?: string
+          license_number?: string | null
+          phone?: string | null
+          route_id?: string | null
+          status?: string | null
+          updated_at?: string
+          waste_category?: string | null
+        }
+        Update: {
+          address?: string | null
+          beds_count?: number | null
+          collection_frequency?: string | null
+          contact_person?: string | null
+          created_at?: string
+          email?: string | null
+          hce_code?: string
+          hce_name?: string
+          hce_type?: string | null
+          id?: string
+          license_number?: string | null
+          phone?: string | null
+          route_id?: string | null
+          status?: string | null
+          updated_at?: string
+          waste_category?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "keil_hce_route_id_fkey"
+            columns: ["route_id"]
+            isOneToOne: false
+            referencedRelation: "keil_routes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      keil_routes: {
+        Row: {
+          area: string | null
+          branch: string | null
+          created_at: string
+          description: string | null
+          id: string
+          route_code: string
+          route_name: string
+          route_type: string | null
+          status: string | null
+          updated_at: string
+        }
+        Insert: {
+          area?: string | null
+          branch?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          route_code: string
+          route_name: string
+          route_type?: string | null
+          status?: string | null
+          updated_at?: string
+        }
+        Update: {
+          area?: string | null
+          branch?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          route_code?: string
+          route_name?: string
+          route_type?: string | null
+          status?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       marketing_visits: {
         Row: {
           contact_number: string | null

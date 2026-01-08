@@ -116,8 +116,12 @@ const navigation = [
   {
     title: 'KEIL Operations',
     icon: Truck,
-    href: '/keil',
-    viewOnly: true,
+    children: [
+      { title: 'Overview', href: '/keil' },
+      { title: 'Route Management', href: '/keil/routes' },
+      { title: 'HCE Details', href: '/keil/hce' },
+      { title: 'Daily Collection', href: '/keil/collection' },
+    ],
   },
   {
     title: 'SMS Contracts',
