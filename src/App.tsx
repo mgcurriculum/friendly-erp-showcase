@@ -30,6 +30,7 @@ import PettyCash from "./pages/finance/PettyCash";
 import Attendance from "./pages/hr/Attendance";
 import SalesReport from "./pages/reports/SalesReport";
 import CollectionReport from "./pages/reports/CollectionReport";
+import SystemSettings from "./pages/settings/SystemSettings";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -73,6 +74,8 @@ const App = () => (
             {/* Reports */}
             <Route path="/reports/sales" element={<SalesReport />} />
             <Route path="/reports/collection" element={<CollectionReport />} />
+            {/* Settings */}
+            <Route path="/settings/system" element={<SystemSettings />} />
             {/* External */}
             <Route path="/keil" element={<KEILOperations />} />
             <Route path="/sms" element={<SMSContracts />} />
