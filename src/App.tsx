@@ -29,6 +29,7 @@ import Payments from "./pages/finance/Payments";
 import PettyCash from "./pages/finance/PettyCash";
 import Attendance from "./pages/hr/Attendance";
 import SalesReport from "./pages/reports/SalesReport";
+import StockReportPage from "./pages/reports/StockReport";
 import CollectionReport from "./pages/reports/CollectionReport";
 import SystemSettings from "./pages/settings/SystemSettings";
 import NotFound from "./pages/NotFound";
@@ -73,6 +74,7 @@ const App = () => (
             <Route path="/hr/attendance" element={<Attendance />} />
             {/* Reports */}
             <Route path="/reports/sales" element={<SalesReport />} />
+            <Route path="/reports/stock" element={<StockReportPage />} />
             <Route path="/reports/collection" element={<CollectionReport />} />
             {/* Settings */}
             <Route path="/settings/system" element={<SystemSettings />} />

@@ -100,7 +100,7 @@ const navigation = [
     icon: FileText,
     children: [
       { title: 'Sales Report', href: '/reports/sales' },
-      { title: 'Stock Report', href: '/inventory/stock' },
+      { title: 'Stock Report', href: '/reports/stock' },
       { title: 'Collection Report', href: '/reports/collection' },
     ],
   },
