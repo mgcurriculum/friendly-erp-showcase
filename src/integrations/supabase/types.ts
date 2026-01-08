@@ -267,6 +267,53 @@ export type Database = {
         }
         Relationships: []
       }
+      cutting_sealing_entries: {
+        Row: {
+          batch_id: string | null
+          created_at: string
+          created_by: string | null
+          cutting_number: string
+          id: string
+          job_date: string
+          notes: string | null
+          quantity_processed: number
+          shift: string | null
+          status: string | null
+        }
+        Insert: {
+          batch_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          cutting_number: string
+          id?: string
+          job_date?: string
+          notes?: string | null
+          quantity_processed?: number
+          shift?: string | null
+          status?: string | null
+        }
+        Update: {
+          batch_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          cutting_number?: string
+          id?: string
+          job_date?: string
+          notes?: string | null
+          quantity_processed?: number
+          shift?: string | null
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cutting_sealing_entries_batch_id_fkey"
+            columns: ["batch_id"]
+            isOneToOne: false
+            referencedRelation: "production_batches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       deliveries: {
         Row: {
           created_at: string
@@ -436,6 +483,59 @@ export type Database = {
         }
         Relationships: []
       }
+      marketing_visits: {
+        Row: {
+          contact_number: string | null
+          created_at: string
+          created_by: string | null
+          customer_name: string
+          customer_place: string | null
+          employee_id: string | null
+          entry_time: string | null
+          exit_time: string | null
+          id: string
+          person_met: string | null
+          remarks: string | null
+          visit_date: string
+        }
+        Insert: {
+          contact_number?: string | null
+          created_at?: string
+          created_by?: string | null
+          customer_name: string
+          customer_place?: string | null
+          employee_id?: string | null
+          entry_time?: string | null
+          exit_time?: string | null
+          id?: string
+          person_met?: string | null
+          remarks?: string | null
+          visit_date?: string
+        }
+        Update: {
+          contact_number?: string | null
+          created_at?: string
+          created_by?: string | null
+          customer_name?: string
+          customer_place?: string | null
+          employee_id?: string | null
+          entry_time?: string | null
+          exit_time?: string | null
+          id?: string
+          person_met?: string | null
+          remarks?: string | null
+          visit_date?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "marketing_visits_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       material_consumption: {
         Row: {
           batch_id: string | null
@@ -474,6 +574,53 @@ export type Database = {
             columns: ["raw_material_id"]
             isOneToOne: false
             referencedRelation: "raw_materials"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      packing_entries: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          cutting_sealing_id: string | null
+          id: string
+          job_date: string
+          notes: string | null
+          packing_number: string
+          quantity_packed: number
+          shift: string | null
+          status: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          cutting_sealing_id?: string | null
+          id?: string
+          job_date?: string
+          notes?: string | null
+          packing_number: string
+          quantity_packed?: number
+          shift?: string | null
+          status?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          cutting_sealing_id?: string | null
+          id?: string
+          job_date?: string
+          notes?: string | null
+          packing_number?: string
+          quantity_packed?: number
+          shift?: string | null
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "packing_entries_cutting_sealing_id_fkey"
+            columns: ["cutting_sealing_id"]
+            isOneToOne: false
+            referencedRelation: "cutting_sealing_entries"
             referencedColumns: ["id"]
           },
         ]
@@ -744,6 +891,53 @@ export type Database = {
           },
         ]
       }
+      purchase_returns: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          purchase_id: string | null
+          reason: string | null
+          return_date: string
+          return_method: string | null
+          return_number: string
+          status: string | null
+          total_amount: number
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          purchase_id?: string | null
+          reason?: string | null
+          return_date?: string
+          return_method?: string | null
+          return_number: string
+          status?: string | null
+          total_amount?: number
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          purchase_id?: string | null
+          reason?: string | null
+          return_date?: string
+          return_method?: string | null
+          return_number?: string
+          status?: string | null
+          total_amount?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "purchase_returns_purchase_id_fkey"
+            columns: ["purchase_id"]
+            isOneToOne: false
+            referencedRelation: "purchases"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       purchases: {
         Row: {
           created_at: string
@@ -950,6 +1144,63 @@ export type Database = {
             columns: ["order_id"]
             isOneToOne: false
             referencedRelation: "customer_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sales_returns: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          handled_by: string | null
+          id: string
+          invoice_id: string | null
+          reason: string | null
+          return_date: string
+          return_method: string | null
+          return_number: string
+          status: string | null
+          total_amount: number
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          handled_by?: string | null
+          id?: string
+          invoice_id?: string | null
+          reason?: string | null
+          return_date?: string
+          return_method?: string | null
+          return_number: string
+          status?: string | null
+          total_amount?: number
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          handled_by?: string | null
+          id?: string
+          invoice_id?: string | null
+          reason?: string | null
+          return_date?: string
+          return_method?: string | null
+          return_number?: string
+          status?: string | null
+          total_amount?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sales_returns_handled_by_fkey"
+            columns: ["handled_by"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sales_returns_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "sales_invoices"
             referencedColumns: ["id"]
           },
         ]

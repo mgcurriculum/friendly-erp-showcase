@@ -62,11 +62,11 @@ export default function CuttingSealing() {
     queryKey: ['cutting-sealing'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('cutting_sealing_entries')
+        .from('cutting_sealing_entries' as any)
         .select('*, production_batches(batch_number, finished_goods(name))')
         .order('created_at', { ascending: false });
       if (error) throw error;
-      return data as CuttingSealingEntry[];
+      return (data || []) as unknown as CuttingSealingEntry[];
     },
   });
 
@@ -95,7 +95,7 @@ export default function CuttingSealing() {
   const createMutation = useMutation({
     mutationFn: async (data: typeof formData) => {
       const cutting_number = await generateCuttingNumber();
-      const { error } = await supabase.from('cutting_sealing_entries').insert({
+      const { error } = await supabase.from('cutting_sealing_entries' as any).insert({
         cutting_number,
         job_date: data.job_date,
         shift: data.shift || null,
@@ -119,7 +119,7 @@ export default function CuttingSealing() {
   const updateMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: typeof formData }) => {
       const { error } = await supabase
-        .from('cutting_sealing_entries')
+        .from('cutting_sealing_entries' as any)
         .update({
           job_date: data.job_date,
           shift: data.shift || null,
@@ -143,7 +143,7 @@ export default function CuttingSealing() {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from('cutting_sealing_entries').delete().eq('id', id);
+      const { error } = await supabase.from('cutting_sealing_entries' as any).delete().eq('id', id);
       if (error) throw error;
     },
     onSuccess: () => {

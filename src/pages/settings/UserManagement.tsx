@@ -53,10 +53,10 @@ export default function UserManagement() {
     queryFn: async () => {
       const { data: roles, error } = await supabase
         .from('user_roles')
-        .select('*, profiles(full_name)')
+        .select('*')
         .order('created_at', { ascending: false });
       if (error) throw error;
-      return roles as UserWithRole[];
+      return (roles || []) as unknown as UserWithRole[];
     },
   });
 

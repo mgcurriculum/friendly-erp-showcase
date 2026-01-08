@@ -62,11 +62,11 @@ export default function Packing() {
     queryKey: ['packing-entries'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('packing_entries')
+        .from('packing_entries' as any)
         .select('*, cutting_sealing_entries(cutting_number, production_batches(finished_goods(name)))')
         .order('created_at', { ascending: false });
       if (error) throw error;
-      return data as PackingEntry[];
+      return (data || []) as unknown as PackingEntry[];
     },
   });
 
@@ -74,12 +74,12 @@ export default function Packing() {
     queryKey: ['cutting-sealing-completed'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('cutting_sealing_entries')
+        .from('cutting_sealing_entries' as any)
         .select('id, cutting_number, production_batches(finished_goods(name))')
         .eq('status', 'completed')
         .order('job_date', { ascending: false });
       if (error) throw error;
-      return data;
+      return data || [];
     },
   });
 
@@ -95,7 +95,7 @@ export default function Packing() {
   const createMutation = useMutation({
     mutationFn: async (data: typeof formData) => {
       const packing_number = await generatePackingNumber();
-      const { error } = await supabase.from('packing_entries').insert({
+      const { error } = await supabase.from('packing_entries' as any).insert({
         packing_number,
         job_date: data.job_date,
         shift: data.shift || null,
@@ -119,7 +119,7 @@ export default function Packing() {
   const updateMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: typeof formData }) => {
       const { error } = await supabase
-        .from('packing_entries')
+        .from('packing_entries' as any)
         .update({
           job_date: data.job_date,
           shift: data.shift || null,
@@ -143,7 +143,7 @@ export default function Packing() {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from('packing_entries').delete().eq('id', id);
+      const { error } = await supabase.from('packing_entries' as any).delete().eq('id', id);
       if (error) throw error;
     },
     onSuccess: () => {

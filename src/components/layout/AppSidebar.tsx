@@ -57,6 +57,8 @@ const navigation = [
     icon: Factory,
     children: [
       { title: 'Production Entry', href: '/production/entry' },
+      { title: 'Cutting & Sealing', href: '/production/cutting-sealing' },
+      { title: 'Packing', href: '/production/packing' },
       { title: 'Material Consumption', href: '/production/consumption' },
       { title: 'Wastage & Damages', href: '/production/wastage' },
     ],
@@ -67,6 +69,7 @@ const navigation = [
     children: [
       { title: 'Purchase Orders', href: '/inventory/purchase-orders' },
       { title: 'Purchases', href: '/inventory/purchases' },
+      { title: 'Purchase Returns', href: '/inventory/purchase-returns' },
       { title: 'Stock Report', href: '/inventory/stock' },
     ],
   },
@@ -77,6 +80,7 @@ const navigation = [
       { title: 'Customer Orders', href: '/sales/orders' },
       { title: 'Invoices', href: '/sales/invoices' },
       { title: 'Deliveries', href: '/sales/deliveries' },
+      { title: 'Sales Returns', href: '/sales/returns' },
     ],
   },
   {
@@ -93,6 +97,7 @@ const navigation = [
     icon: Users,
     children: [
       { title: 'Attendance', href: '/hr/attendance' },
+      { title: 'Marketing Visits', href: '/hr/marketing-visits' },
     ],
   },
   {
@@ -100,8 +105,12 @@ const navigation = [
     icon: FileText,
     children: [
       { title: 'Sales Report', href: '/reports/sales' },
+      { title: 'Purchase Report', href: '/reports/purchase' },
+      { title: 'Production Report', href: '/reports/production' },
       { title: 'Stock Report', href: '/reports/stock' },
+      { title: 'Attendance Report', href: '/reports/attendance' },
       { title: 'Collection Report', href: '/reports/collection' },
+      { title: 'Scorecard', href: '/reports/scorecard' },
     ],
   },
   {

@@ -62,11 +62,11 @@ export default function PurchaseReturns() {
     queryKey: ['purchase-returns'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('purchase_returns')
+        .from('purchase_returns' as any)
         .select('*, purchases(purchase_number, suppliers(name))')
         .order('created_at', { ascending: false });
       if (error) throw error;
-      return data as PurchaseReturn[];
+      return (data || []) as unknown as PurchaseReturn[];
     },
   });
 
@@ -94,7 +94,7 @@ export default function PurchaseReturns() {
   const createMutation = useMutation({
     mutationFn: async (data: typeof formData) => {
       const return_number = await generateReturnNumber();
-      const { error } = await supabase.from('purchase_returns').insert({
+      const { error } = await supabase.from('purchase_returns' as any).insert({
         return_number,
         return_date: data.return_date,
         purchase_id: data.purchase_id || null,
@@ -118,7 +118,7 @@ export default function PurchaseReturns() {
   const updateMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: typeof formData }) => {
       const { error } = await supabase
-        .from('purchase_returns')
+        .from('purchase_returns' as any)
         .update({
           return_date: data.return_date,
           purchase_id: data.purchase_id || null,
@@ -142,7 +142,7 @@ export default function PurchaseReturns() {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from('purchase_returns').delete().eq('id', id);
+      const { error } = await supabase.from('purchase_returns' as any).delete().eq('id', id);
       if (error) throw error;
     },
     onSuccess: () => {
