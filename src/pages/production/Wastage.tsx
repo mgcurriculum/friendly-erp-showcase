@@ -22,7 +22,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { Trash2 } from 'lucide-react';
+import { Edit, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
 
 interface WastageRecord {
@@ -43,6 +43,7 @@ export default function Wastage() {
   const queryClient = useQueryClient();
   const [search, setSearch] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [editingRecord, setEditingRecord] = useState<WastageRecord | null>(null);
 
   const canEdit = role === 'super_admin' || role === 'manager' || role === 'data_entry';
 
@@ -112,6 +113,30 @@ export default function Wastage() {
     },
   });
 
+  const updateMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: typeof formData }) => {
+      const { error } = await supabase
+        .from('wastage')
+        .update({
+          batch_id: data.batch_id || null,
+          finished_good_id: data.finished_good_id || null,
+          quantity: parseFloat(data.quantity) || 0,
+          wastage_date: data.wastage_date,
+          reason: data.reason || null,
+        })
+        .eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['wastage'] });
+      toast({ title: 'Wastage updated successfully' });
+      handleCloseDialog();
+    },
+    onError: (error: Error) => {
+      toast({ title: 'Error updating wastage', description: error.message, variant: 'destructive' });
+    },
+  });
+
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase.from('wastage').delete().eq('id', id);
@@ -128,6 +153,7 @@ export default function Wastage() {
 
   const handleCloseDialog = () => {
     setIsDialogOpen(false);
+    setEditingRecord(null);
     setFormData({
       batch_id: '',
       finished_good_id: '',
@@ -137,9 +163,25 @@ export default function Wastage() {
     });
   };
 
+  const handleEdit = (record: WastageRecord) => {
+    setEditingRecord(record);
+    setFormData({
+      batch_id: record.batch_id || '',
+      finished_good_id: record.finished_good_id || '',
+      quantity: String(record.quantity),
+      wastage_date: record.wastage_date,
+      reason: record.reason || '',
+    });
+    setIsDialogOpen(true);
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    createMutation.mutate(formData);
+    if (editingRecord) {
+      updateMutation.mutate({ id: editingRecord.id, data: formData });
+    } else {
+      createMutation.mutate(formData);
+    }
   };
 
   const filteredWastages = wastages.filter(
@@ -160,9 +202,14 @@ export default function Wastage() {
       header: 'Actions',
       cell: (w) =>
         canEdit && (
-          <Button size="icon" variant="ghost" onClick={() => deleteMutation.mutate(w.id)}>
-            <Trash2 className="h-4 w-4" />
-          </Button>
+          <div className="flex gap-2">
+            <Button size="icon" variant="ghost" onClick={() => handleEdit(w)}>
+              <Edit className="h-4 w-4" />
+            </Button>
+            <Button size="icon" variant="ghost" onClick={() => deleteMutation.mutate(w.id)}>
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          </div>
         ),
     },
   ];
@@ -190,7 +237,7 @@ export default function Wastage() {
       <Dialog open={isDialogOpen} onOpenChange={handleCloseDialog}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>Record Wastage</DialogTitle>
+            <DialogTitle>{editingRecord ? 'Edit Wastage' : 'Record Wastage'}</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
@@ -245,7 +292,7 @@ export default function Wastage() {
             </div>
             <div className="flex justify-end gap-2">
               <Button type="button" variant="outline" onClick={handleCloseDialog}>Cancel</Button>
-              <Button type="submit">Record</Button>
+              <Button type="submit">{editingRecord ? 'Update' : 'Record'}</Button>
             </div>
           </form>
         </DialogContent>

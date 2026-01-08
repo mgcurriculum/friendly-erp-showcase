@@ -24,7 +24,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { Trash2, TrendingUp, TrendingDown, Wallet } from 'lucide-react';
+import { Edit, Trash2, TrendingUp, TrendingDown, Wallet } from 'lucide-react';
 import { format } from 'date-fns';
 
 interface PettyCashRecord {
@@ -44,6 +44,7 @@ export default function PettyCash() {
   const queryClient = useQueryClient();
   const [search, setSearch] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [editingRecord, setEditingRecord] = useState<PettyCashRecord | null>(null);
 
   const canEdit = role === 'super_admin' || role === 'manager' || role === 'data_entry';
 
@@ -100,6 +101,31 @@ export default function PettyCash() {
     },
   });
 
+  const updateMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: typeof formData }) => {
+      const { error } = await supabase
+        .from('petty_cash')
+        .update({
+          transaction_date: data.transaction_date,
+          transaction_type: data.transaction_type,
+          category: data.category || null,
+          description: data.description,
+          amount: parseFloat(data.amount) || 0,
+          reference: data.reference || null,
+        })
+        .eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['petty-cash'] });
+      toast({ title: 'Transaction updated successfully' });
+      handleCloseDialog();
+    },
+    onError: (error: Error) => {
+      toast({ title: 'Error updating transaction', description: error.message, variant: 'destructive' });
+    },
+  });
+
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase.from('petty_cash').delete().eq('id', id);
@@ -116,6 +142,7 @@ export default function PettyCash() {
 
   const handleCloseDialog = () => {
     setIsDialogOpen(false);
+    setEditingRecord(null);
     setFormData({
       transaction_date: format(new Date(), 'yyyy-MM-dd'),
       transaction_type: 'expense',
@@ -126,9 +153,26 @@ export default function PettyCash() {
     });
   };
 
+  const handleEdit = (record: PettyCashRecord) => {
+    setEditingRecord(record);
+    setFormData({
+      transaction_date: record.transaction_date,
+      transaction_type: record.transaction_type,
+      category: record.category || '',
+      description: record.description,
+      amount: String(record.amount),
+      reference: record.reference || '',
+    });
+    setIsDialogOpen(true);
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    createMutation.mutate(formData);
+    if (editingRecord) {
+      updateMutation.mutate({ id: editingRecord.id, data: formData });
+    } else {
+      createMutation.mutate(formData);
+    }
   };
 
   const filteredTransactions = transactions.filter(
@@ -169,9 +213,14 @@ export default function PettyCash() {
       header: 'Actions',
       cell: (t) =>
         canEdit && (
-          <Button size="icon" variant="ghost" onClick={() => deleteMutation.mutate(t.id)}>
-            <Trash2 className="h-4 w-4" />
-          </Button>
+          <div className="flex gap-2">
+            <Button size="icon" variant="ghost" onClick={() => handleEdit(t)}>
+              <Edit className="h-4 w-4" />
+            </Button>
+            <Button size="icon" variant="ghost" onClick={() => deleteMutation.mutate(t.id)}>
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          </div>
         ),
     },
   ];
@@ -245,7 +294,7 @@ export default function PettyCash() {
       <Dialog open={isDialogOpen} onOpenChange={handleCloseDialog}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>Add Transaction</DialogTitle>
+            <DialogTitle>{editingRecord ? 'Edit Transaction' : 'Add Transaction'}</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
@@ -311,7 +360,7 @@ export default function PettyCash() {
             </div>
             <div className="flex justify-end gap-2">
               <Button type="button" variant="outline" onClick={handleCloseDialog}>Cancel</Button>
-              <Button type="submit">Add</Button>
+              <Button type="submit">{editingRecord ? 'Update' : 'Add'}</Button>
             </div>
           </form>
         </DialogContent>

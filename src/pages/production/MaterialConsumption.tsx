@@ -21,7 +21,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { Trash2 } from 'lucide-react';
+import { Edit, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
 
 interface MaterialConsumption {
@@ -41,6 +41,7 @@ export default function MaterialConsumption() {
   const queryClient = useQueryClient();
   const [search, setSearch] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [editingRecord, setEditingRecord] = useState<MaterialConsumption | null>(null);
 
   const canEdit = role === 'super_admin' || role === 'manager' || role === 'data_entry';
 
@@ -108,6 +109,29 @@ export default function MaterialConsumption() {
     },
   });
 
+  const updateMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: typeof formData }) => {
+      const { error } = await supabase
+        .from('material_consumption')
+        .update({
+          batch_id: data.batch_id || null,
+          raw_material_id: data.raw_material_id || null,
+          quantity: parseFloat(data.quantity) || 0,
+          consumption_date: data.consumption_date,
+        })
+        .eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['material-consumption'] });
+      toast({ title: 'Consumption updated successfully' });
+      handleCloseDialog();
+    },
+    onError: (error: Error) => {
+      toast({ title: 'Error updating consumption', description: error.message, variant: 'destructive' });
+    },
+  });
+
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase.from('material_consumption').delete().eq('id', id);
@@ -124,6 +148,7 @@ export default function MaterialConsumption() {
 
   const handleCloseDialog = () => {
     setIsDialogOpen(false);
+    setEditingRecord(null);
     setFormData({
       batch_id: '',
       raw_material_id: '',
@@ -132,9 +157,24 @@ export default function MaterialConsumption() {
     });
   };
 
+  const handleEdit = (record: MaterialConsumption) => {
+    setEditingRecord(record);
+    setFormData({
+      batch_id: record.batch_id || '',
+      raw_material_id: record.raw_material_id || '',
+      quantity: String(record.quantity),
+      consumption_date: record.consumption_date,
+    });
+    setIsDialogOpen(true);
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    createMutation.mutate(formData);
+    if (editingRecord) {
+      updateMutation.mutate({ id: editingRecord.id, data: formData });
+    } else {
+      createMutation.mutate(formData);
+    }
   };
 
   const filteredConsumptions = consumptions.filter(
@@ -153,9 +193,14 @@ export default function MaterialConsumption() {
       header: 'Actions',
       cell: (c) =>
         canEdit && (
-          <Button size="icon" variant="ghost" onClick={() => deleteMutation.mutate(c.id)}>
-            <Trash2 className="h-4 w-4" />
-          </Button>
+          <div className="flex gap-2">
+            <Button size="icon" variant="ghost" onClick={() => handleEdit(c)}>
+              <Edit className="h-4 w-4" />
+            </Button>
+            <Button size="icon" variant="ghost" onClick={() => deleteMutation.mutate(c.id)}>
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          </div>
         ),
     },
   ];
@@ -183,7 +228,7 @@ export default function MaterialConsumption() {
       <Dialog open={isDialogOpen} onOpenChange={handleCloseDialog}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>Record Material Consumption</DialogTitle>
+            <DialogTitle>{editingRecord ? 'Edit Consumption' : 'Record Material Consumption'}</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
@@ -229,7 +274,7 @@ export default function MaterialConsumption() {
             </div>
             <div className="flex justify-end gap-2">
               <Button type="button" variant="outline" onClick={handleCloseDialog}>Cancel</Button>
-              <Button type="submit">Record</Button>
+              <Button type="submit">{editingRecord ? 'Update' : 'Record'}</Button>
             </div>
           </form>
         </DialogContent>
