@@ -110,6 +110,7 @@ const navigation = [
       { title: 'Stock Report', href: '/reports/stock' },
       { title: 'Attendance Report', href: '/reports/attendance' },
       { title: 'Collection Report', href: '/reports/collection' },
+      { title: 'KEIL Collection', href: '/reports/keil-collection' },
       { title: 'Scorecard', href: '/reports/scorecard' },
     ],
   },
