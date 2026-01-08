@@ -15,6 +15,7 @@ import RawMaterials from "./pages/masters/RawMaterials";
 import FinishedGoods from "./pages/masters/FinishedGoods";
 import Suppliers from "./pages/masters/Suppliers";
 import Customers from "./pages/masters/Customers";
+import SalesInvoices from "./pages/sales/SalesInvoices";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -36,6 +37,7 @@ const App = () => (
             <Route path="/masters/finished-goods" element={<FinishedGoods />} />
             <Route path="/masters/suppliers" element={<Suppliers />} />
             <Route path="/masters/customers" element={<Customers />} />
+            <Route path="/sales/invoices" element={<SalesInvoices />} />
             <Route path="/keil" element={<KEILOperations />} />
             <Route path="/sms" element={<SMSContracts />} />
             <Route path="*" element={<NotFound />} />
