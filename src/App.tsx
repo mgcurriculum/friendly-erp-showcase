@@ -8,6 +8,9 @@ import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
 import KEILOperations from "./pages/KEILOperations";
+import RouteManagement from "./pages/keil/RouteManagement";
+import HCEDetails from "./pages/keil/HCEDetails";
+import DailyCollection from "./pages/keil/DailyCollection";
 import SMSContracts from "./pages/SMSContracts";
 import Employees from "./pages/masters/Employees";
 import Vehicles from "./pages/masters/Vehicles";
@@ -98,8 +101,12 @@ const App = () => (
             {/* Settings */}
             <Route path="/settings/system" element={<SystemSettings />} />
             <Route path="/settings/users" element={<UserManagement />} />
-            {/* External */}
+            {/* KEIL Operations */}
             <Route path="/keil" element={<KEILOperations />} />
+            <Route path="/keil/routes" element={<RouteManagement />} />
+            <Route path="/keil/hce" element={<HCEDetails />} />
+            <Route path="/keil/collection" element={<DailyCollection />} />
+            {/* External */}
             <Route path="/sms" element={<SMSContracts />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
