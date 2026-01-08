@@ -23,7 +23,8 @@ import {
 } from "@/components/ui/table";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from "recharts";
 import { format, startOfMonth, endOfMonth } from "date-fns";
-import { FileDown, Filter, TrendingUp, Weight, Package, Route } from "lucide-react";
+import { FileDown, Filter, TrendingUp, Weight, Package, Route, Building2 } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const COLORS = ['hsl(var(--primary))', 'hsl(var(--secondary))', 'hsl(var(--accent))', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4'];
 
@@ -73,11 +74,50 @@ export default function KEILCollectionReport() {
     }
   });
 
+  // Fetch collection items for HCE-wise analytics
+  const { data: collectionItems = [] } = useQuery({
+    queryKey: ['keil-collection-items-report', startDate, endDate, selectedRoute],
+    queryFn: async () => {
+      // First get collection IDs based on filters
+      let collectionsQuery = supabase
+        .from('keil_collections' as any)
+        .select('id')
+        .gte('collection_date', startDate)
+        .lte('collection_date', endDate);
+
+      if (selectedRoute !== "all") {
+        collectionsQuery = collectionsQuery.eq('route_id', selectedRoute);
+      }
+
+      const { data: filteredCollections, error: collectionsError } = await collectionsQuery;
+      if (collectionsError) throw collectionsError;
+
+      if (!filteredCollections || filteredCollections.length === 0) {
+        return [];
+      }
+
+      const collectionIds = filteredCollections.map((c: any) => c.id);
+
+      const { data, error } = await supabase
+        .from('keil_collection_items' as any)
+        .select(`
+          *,
+          hce:keil_hce(hce_name, hce_code, hce_type, route_id)
+        `)
+        .in('collection_id', collectionIds);
+
+      if (error) throw error;
+      return (data || []) as any[];
+    },
+    enabled: collections.length > 0 || startDate !== '' || endDate !== ''
+  });
+
   // Calculate summary stats
   const totalWeight = collections.reduce((sum, c) => sum + (c.total_weight || 0), 0);
   const totalBags = collections.reduce((sum, c) => sum + (c.total_bags || 0), 0);
   const totalTrips = collections.length;
   const avgWeightPerTrip = totalTrips > 0 ? (totalWeight / totalTrips).toFixed(2) : 0;
+  const totalHCEs = new Set(collectionItems.map((item: any) => item.hce_id).filter(Boolean)).size;
 
   // Route-wise analytics
   const routeWiseData = collections.reduce((acc: any[], collection) => {
@@ -114,6 +154,63 @@ export default function KEILCollectionReport() {
     }
     return acc;
   }, []).sort((a, b) => a.date.localeCompare(b.date));
+
+  // HCE-wise analytics
+  const hceWiseData = collectionItems.reduce((acc: any[], item: any) => {
+    const hceName = item.hce?.hce_name || 'Unknown';
+    const hceType = item.hce?.hce_type || 'Unknown';
+    const existing = acc.find(h => h.hce === hceName);
+    if (existing) {
+      existing.weight += item.weight || 0;
+      existing.bags += item.bags_count || 0;
+      existing.collections += 1;
+    } else {
+      acc.push({
+        hce: hceName,
+        hceType,
+        weight: item.weight || 0,
+        bags: item.bags_count || 0,
+        collections: 1
+      });
+    }
+    return acc;
+  }, []).sort((a, b) => b.weight - a.weight);
+
+  // HCE Type distribution
+  const hceTypeData = collectionItems.reduce((acc: any[], item: any) => {
+    const hceType = item.hce?.hce_type || 'Unknown';
+    const existing = acc.find(h => h.type === hceType);
+    if (existing) {
+      existing.weight += item.weight || 0;
+      existing.bags += item.bags_count || 0;
+      existing.count += 1;
+    } else {
+      acc.push({
+        type: hceType,
+        weight: item.weight || 0,
+        bags: item.bags_count || 0,
+        count: 1
+      });
+    }
+    return acc;
+  }, []);
+
+  // Waste type distribution
+  const wasteTypeData = collectionItems.reduce((acc: any[], item: any) => {
+    const wasteType = item.waste_type || 'Unknown';
+    const existing = acc.find(w => w.type === wasteType);
+    if (existing) {
+      existing.weight += item.weight || 0;
+      existing.bags += item.bags_count || 0;
+    } else {
+      acc.push({
+        type: wasteType,
+        weight: item.weight || 0,
+        bags: item.bags_count || 0
+      });
+    }
+    return acc;
+  }, []);
 
   const handleExport = () => {
     const csvContent = [
@@ -202,7 +299,7 @@ export default function KEILCollectionReport() {
         </Card>
 
         {/* Summary Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
           <Card>
             <CardContent className="pt-6">
               <div className="flex items-center gap-4">
@@ -245,6 +342,19 @@ export default function KEILCollectionReport() {
           <Card>
             <CardContent className="pt-6">
               <div className="flex items-center gap-4">
+                <div className="p-3 bg-blue-500/10 rounded-lg">
+                  <Building2 className="h-6 w-6 text-blue-500" />
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">HCEs Covered</p>
+                  <p className="text-2xl font-bold">{totalHCEs}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-4">
                 <div className="p-3 bg-green-500/10 rounded-lg">
                   <TrendingUp className="h-6 w-6 text-green-500" />
                 </div>
@@ -257,7 +367,15 @@ export default function KEILCollectionReport() {
           </Card>
         </div>
 
-        {/* Charts */}
+        {/* Tabs for Route-wise and HCE-wise Analytics */}
+        <Tabs defaultValue="routes" className="space-y-6">
+          <TabsList>
+            <TabsTrigger value="routes">Route Analytics</TabsTrigger>
+            <TabsTrigger value="hce">HCE Analytics</TabsTrigger>
+            <TabsTrigger value="details">Collection Details</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="routes" className="space-y-6">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Route-wise Bar Chart */}
           <Card>
@@ -391,63 +509,242 @@ export default function KEILCollectionReport() {
             </Table>
           </CardContent>
         </Card>
+          </TabsContent>
 
-        {/* Detailed Collections Table */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Collection Details</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Date</TableHead>
-                  <TableHead>Collection No</TableHead>
-                  <TableHead>Route</TableHead>
-                  <TableHead>Vehicle</TableHead>
-                  <TableHead>Driver</TableHead>
-                  <TableHead className="text-right">Weight (kg)</TableHead>
-                  <TableHead className="text-right">Bags</TableHead>
-                  <TableHead>Status</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {isLoading ? (
-                  <TableRow>
-                    <TableCell colSpan={8} className="text-center py-8">Loading...</TableCell>
-                  </TableRow>
-                ) : collections.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
-                      No collections found for the selected filters
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  collections.map((collection) => (
-                    <TableRow key={collection.id}>
-                      <TableCell>{format(new Date(collection.collection_date), 'dd MMM yyyy')}</TableCell>
-                      <TableCell className="font-medium">{collection.collection_number}</TableCell>
-                      <TableCell>{collection.route?.route_name || '-'}</TableCell>
-                      <TableCell>{collection.vehicle?.registration_number || '-'}</TableCell>
-                      <TableCell>{collection.driver?.name || '-'}</TableCell>
-                      <TableCell className="text-right">{collection.total_weight || 0}</TableCell>
-                      <TableCell className="text-right">{collection.total_bags || 0}</TableCell>
-                      <TableCell>
-                        <span className={`px-2 py-1 rounded-full text-xs ${
-                          collection.status === 'completed' 
-                            ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100'
-                            : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-100'
-                        }`}>
-                          {collection.status}
-                        </span>
-                      </TableCell>
+          {/* HCE Analytics Tab */}
+          <TabsContent value="hce" className="space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* HCE-wise Bar Chart */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Top HCEs by Collection Weight (kg)</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="h-[350px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={hceWiseData.slice(0, 10)} layout="vertical">
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis type="number" />
+                        <YAxis dataKey="hce" type="category" width={120} tick={{ fontSize: 11 }} />
+                        <Tooltip 
+                          contentStyle={{ 
+                            backgroundColor: 'hsl(var(--card))', 
+                            border: '1px solid hsl(var(--border))',
+                            borderRadius: '8px'
+                          }} 
+                        />
+                        <Bar dataKey="weight" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* HCE Type Distribution */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Collection by HCE Type</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="h-[350px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={hceTypeData}
+                          dataKey="weight"
+                          nameKey="type"
+                          cx="50%"
+                          cy="50%"
+                          outerRadius={100}
+                          label={({ type, percent }) => `${type}: ${(percent * 100).toFixed(0)}%`}
+                          labelLine={false}
+                        >
+                          {hceTypeData.map((_, index) => (
+                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                          ))}
+                        </Pie>
+                        <Tooltip 
+                          contentStyle={{ 
+                            backgroundColor: 'hsl(var(--card))', 
+                            border: '1px solid hsl(var(--border))',
+                            borderRadius: '8px'
+                          }} 
+                        />
+                        <Legend />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Waste Type Distribution */}
+              <Card className="lg:col-span-2">
+                <CardHeader>
+                  <CardTitle>Waste Type Distribution</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="h-[300px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={wasteTypeData}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="type" tick={{ fontSize: 12 }} />
+                        <YAxis />
+                        <Tooltip 
+                          contentStyle={{ 
+                            backgroundColor: 'hsl(var(--card))', 
+                            border: '1px solid hsl(var(--border))',
+                            borderRadius: '8px'
+                          }} 
+                        />
+                        <Bar dataKey="weight" name="Weight (kg)" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+                        <Bar dataKey="bags" name="Bags" fill="hsl(var(--secondary))" radius={[4, 4, 0, 0]} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* HCE-wise Summary Table */}
+            <Card>
+              <CardHeader>
+                <CardTitle>HCE-wise Collection Summary</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>HCE Name</TableHead>
+                      <TableHead>Type</TableHead>
+                      <TableHead className="text-right">Collections</TableHead>
+                      <TableHead className="text-right">Total Weight (kg)</TableHead>
+                      <TableHead className="text-right">Total Bags</TableHead>
+                      <TableHead className="text-right">Avg Weight</TableHead>
                     </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
+                  </TableHeader>
+                  <TableBody>
+                    {hceWiseData.map((row, index) => (
+                      <TableRow key={index}>
+                        <TableCell className="font-medium">{row.hce}</TableCell>
+                        <TableCell>
+                          <span className="px-2 py-1 rounded-full text-xs bg-muted">
+                            {row.hceType}
+                          </span>
+                        </TableCell>
+                        <TableCell className="text-right">{row.collections}</TableCell>
+                        <TableCell className="text-right">{row.weight.toFixed(2)}</TableCell>
+                        <TableCell className="text-right">{row.bags}</TableCell>
+                        <TableCell className="text-right">{(row.weight / row.collections).toFixed(2)}</TableCell>
+                      </TableRow>
+                    ))}
+                    {hceWiseData.length === 0 && (
+                      <TableRow>
+                        <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
+                          No HCE collection data available for the selected period
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
+
+            {/* HCE Type Summary */}
+            <Card>
+              <CardHeader>
+                <CardTitle>HCE Type Summary</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>HCE Type</TableHead>
+                      <TableHead className="text-right">HCE Count</TableHead>
+                      <TableHead className="text-right">Total Weight (kg)</TableHead>
+                      <TableHead className="text-right">Total Bags</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {hceTypeData.map((row, index) => (
+                      <TableRow key={index}>
+                        <TableCell className="font-medium capitalize">{row.type}</TableCell>
+                        <TableCell className="text-right">{row.count}</TableCell>
+                        <TableCell className="text-right">{row.weight.toFixed(2)}</TableCell>
+                        <TableCell className="text-right">{row.bags}</TableCell>
+                      </TableRow>
+                    ))}
+                    {hceTypeData.length === 0 && (
+                      <TableRow>
+                        <TableCell colSpan={4} className="text-center text-muted-foreground py-8">
+                          No data available
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Collection Details Tab */}
+          <TabsContent value="details" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Collection Details</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Date</TableHead>
+                      <TableHead>Collection No</TableHead>
+                      <TableHead>Route</TableHead>
+                      <TableHead>Vehicle</TableHead>
+                      <TableHead>Driver</TableHead>
+                      <TableHead className="text-right">Weight (kg)</TableHead>
+                      <TableHead className="text-right">Bags</TableHead>
+                      <TableHead>Status</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {isLoading ? (
+                      <TableRow>
+                        <TableCell colSpan={8} className="text-center py-8">Loading...</TableCell>
+                      </TableRow>
+                    ) : collections.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
+                          No collections found for the selected filters
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      collections.map((collection) => (
+                        <TableRow key={collection.id}>
+                          <TableCell>{format(new Date(collection.collection_date), 'dd MMM yyyy')}</TableCell>
+                          <TableCell className="font-medium">{collection.collection_number}</TableCell>
+                          <TableCell>{collection.route?.route_name || '-'}</TableCell>
+                          <TableCell>{collection.vehicle?.registration_number || '-'}</TableCell>
+                          <TableCell>{collection.driver?.name || '-'}</TableCell>
+                          <TableCell className="text-right">{collection.total_weight || 0}</TableCell>
+                          <TableCell className="text-right">{collection.total_bags || 0}</TableCell>
+                          <TableCell>
+                            <span className={`px-2 py-1 rounded-full text-xs ${
+                              collection.status === 'completed' 
+                                ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100'
+                                : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-100'
+                            }`}>
+                              {collection.status}
+                            </span>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
       </div>
     </DashboardLayout>
   );
