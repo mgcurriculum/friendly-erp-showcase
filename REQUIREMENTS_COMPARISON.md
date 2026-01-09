@@ -1,6 +1,6 @@
 # Mini ERP Requirements Comparison Document
 
-**Document Version:** 1.0  
+**Document Version:** 2.0  
 **Date:** January 9, 2026  
 **Project:** Mini ERP System  
 
@@ -14,20 +14,92 @@ This document provides a detailed comparison between the requirements specified 
 
 | Status | Count | Percentage |
 |--------|-------|------------|
-| ✅ Completed | 46 | 55% |
-| 🟡 Partially Completed | 12 | 15% |
-| ⏳ Pending | 25 | 30% |
-| **Total** | **83** | **100%** |
+| ✅ Completed | 28 | 25% |
+| 🟡 Partially Completed | 35 | 32% |
+| ⏳ Pending | 47 | 43% |
+| **Total** | **110** | **100%** |
 
 ### Progress by Module
 
 | Module | Completed | Partial | Pending | Total |
 |--------|-----------|---------|---------|-------|
-| Manufacturing (Poly Bag) | 28 | 8 | 5 | 41 |
-| KEIL Operations | 14 | 2 | 2 | 18 |
+| Manufacturing (Poly Bag) | 18 | 12 | 18 | 48 |
+| KEIL Operations | 8 | 2 | 12 | 22 |
 | GJM Contract | 0 | 0 | 8 | 8 |
 | Aryaja Contract | 0 | 0 | 6 | 6 |
-| SMS Contract | 4 | 2 | 4 | 10 |
+| SMS Contract | 2 | 2 | 6 | 10 |
+| System-Wide Features | 0 | 0 | 7 | 7 |
+
+---
+
+## Detailed Gap Analysis Summary
+
+### Missing Master Fields (Per Database Table)
+
+#### Employees Master - Missing Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| date_of_birth | DATE | Employee date of birth |
+| age | INTEGER | Auto-calculated from DOB |
+| qualification | TEXT | Educational qualification |
+| experience_years | INTEGER | Years of experience |
+| experience_details | TEXT | Experience description |
+| guarantor_name | TEXT | Guarantor name |
+| guarantor_phone | TEXT | Guarantor contact |
+| guarantor_address | TEXT | Guarantor address |
+| license_number | TEXT | Driving/Professional license |
+| license_expiry | DATE | License expiry date |
+| passport_number | TEXT | Passport number |
+| passport_expiry | DATE | Passport expiry date |
+| medical_certificate | BOOLEAN | Medical certificate on file |
+| police_verification | BOOLEAN | Police verification done |
+| family_details | JSONB | Family member information |
+| employee_category | TEXT | Category (Permanent/Contract/etc) |
+| minimum_target | DECIMAL | Minimum performance target |
+| incentive_percentage | DECIMAL | Incentive percentage |
+| incentive_slabs | JSONB | Incentive slab configuration |
+
+#### Vehicles Master - Missing Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| engine_number | TEXT | Vehicle engine number |
+| chassis_number | TEXT | Vehicle chassis number |
+| initial_km | INTEGER | KM reading on Day 1 |
+| seating_capacity | INTEGER | Number of seats |
+| owner_name | TEXT | Owner name |
+| owner_address | TEXT | Owner address |
+
+#### Suppliers Master - Missing Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| products_supplied | TEXT[] | List of products supplied |
+| delivery_period | INTEGER | Standard delivery period (days) |
+| delivery_mode | TEXT | Delivery mode (Road/Rail/etc) |
+
+#### Customers Master - Missing Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| delivery_period | INTEGER | Standard delivery period (days) |
+| delivery_mode | TEXT | Delivery mode preference |
+
+#### Finished Goods Master - Missing Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| pcb_authorization_number | TEXT | PCB Authorization Number |
+| pcb_renewal_date | DATE | PCB Authorization renewal date |
+| license_renewal_date | DATE | License renewal date |
+| product_grade | TEXT | Product grade (separate from name) |
+
+#### Raw Materials Master - Missing Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| availability | TEXT | Local / Outstation / Abroad |
 
 ---
 
@@ -48,55 +120,70 @@ This document provides a detailed comparison between the requirements specified 
 
 | Field | Details |
 |-------|---------|
-| **Requirement** | Raw Materials master with code, name, grade, unit, rate, stock levels |
-| **Status** | ✅ Completed |
+| **Requirement** | Raw Materials master with code, name, grade, unit, rate, stock levels, availability |
+| **Status** | 🟡 Partially Completed |
 | **Verification Steps** | 1. Navigate to **Masters → Raw Materials**<br>2. Use "Add Raw Material" button to create<br>3. Search, edit, or delete existing materials |
+| **Missing Fields** | Availability (Local / Outstation / Abroad) |
 | **Notes** | Full CRUD operations with DataTable component. Includes code, name, grade, unit, rate, current stock, minimum stock level tracking. |
 
 #### 3. Finished Goods Master
 
 | Field | Details |
 |-------|---------|
-| **Requirement** | Finished Goods master with color, thickness, size, rate, stock |
-| **Status** | ✅ Completed |
+| **Requirement** | Finished Goods master with color, thickness, size, rate, stock, PCB details, grade |
+| **Status** | 🟡 Partially Completed |
 | **Verification Steps** | 1. Navigate to **Masters → Finished Goods**<br>2. Add/Edit/Delete finished goods<br>3. View stock levels and specifications |
+| **Missing Fields** | PCB Authorization Number, PCB Renewal Date, License Renewal Date, Product Grade |
 | **Notes** | Supports code, name, color, thickness, size, no per kg, unit, rate, current stock, minimum stock level. |
 
-#### 4. Suppliers Master
+#### 4. Other Product Details Master
 
 | Field | Details |
 |-------|---------|
-| **Requirement** | Suppliers master with contact, credit terms, balance tracking |
-| **Status** | ✅ Completed |
+| **Requirement** | Separate master for other product details (distinct from Finished Goods) |
+| **Status** | ⏳ Pending |
+| **Verification Steps** | Not yet implemented |
+| **Notes** | Requirement specifies separate master from Finished Goods for non-manufactured products. |
+
+#### 5. Suppliers Master
+
+| Field | Details |
+|-------|---------|
+| **Requirement** | Suppliers master with contact, credit terms, balance tracking, products, delivery |
+| **Status** | 🟡 Partially Completed |
 | **Verification Steps** | 1. Navigate to **Masters → Suppliers**<br>2. Manage supplier records with full details |
+| **Missing Fields** | Products Supplied, Delivery Period, Delivery Mode |
 | **Notes** | Includes code, name, contact person, phone, email, address, GST number, credit period, credit limit, opening balance, current balance. |
 
-#### 5. Customers Master
+#### 6. Customers Master
 
 | Field | Details |
 |-------|---------|
-| **Requirement** | Customers master with contact, credit terms, balance tracking |
-| **Status** | ✅ Completed |
+| **Requirement** | Customers master with contact, credit terms, balance tracking, delivery preferences |
+| **Status** | 🟡 Partially Completed |
 | **Verification Steps** | 1. Navigate to **Masters → Customers**<br>2. Add/Edit/Delete customer records |
+| **Missing Fields** | Delivery Period, Delivery Mode |
 | **Notes** | Same structure as Suppliers. Full credit management support. |
 
-#### 6. Employees Master
+#### 7. Employees Master
 
 | Field | Details |
 |-------|---------|
-| **Requirement** | Employee master with department, designation, salary, loan/suspense balance |
-| **Status** | ✅ Completed |
+| **Requirement** | Employee master with full personal, qualification, guarantor, license, family, target details |
+| **Status** | 🟡 Partially Completed |
 | **Verification Steps** | 1. Navigate to **Masters → Employees**<br>2. Manage employee records |
-| **Notes** | Supports code, name, department, designation, phone, email, address, joining date, salary, loan balance, suspense balance, status. |
+| **Missing Fields** | Date of Birth/Age, Qualification & Experience, Guarantor details, License/Passport with expiry, Medical Certificate flag, Police Verification flag, Family details, Employee Category, Minimum Target, Incentive percentage & slabs |
+| **Notes** | Currently supports: code, name, department, designation, phone, email, address, joining date, salary, loan balance, suspense balance, status. |
 
-#### 7. Vehicles Master
+#### 8. Vehicles Master
 
 | Field | Details |
 |-------|---------|
-| **Requirement** | Vehicles master with registration, type, fitness/insurance expiry, GPS |
-| **Status** | ✅ Completed |
+| **Requirement** | Vehicles master with registration, type, fitness/insurance expiry, GPS, engine details, owner |
+| **Status** | 🟡 Partially Completed |
 | **Verification Steps** | 1. Navigate to **Masters → Vehicles**<br>2. Add vehicles with all required details |
-| **Notes** | Includes registration number, vehicle type, make, model, fitness expiry, insurance expiry, purpose, GPS enabled flag, status. |
+| **Missing Fields** | Engine Number, Chassis Number, KM on Day 1, Seating Capacity, Owner Address |
+| **Notes** | Currently includes: registration number, vehicle type, make, model, fitness expiry, insurance expiry, purpose, GPS enabled flag, status. |
 
 ---
 
@@ -129,14 +216,15 @@ This document provides a detailed comparison between the requirements specified 
 | **Verification Steps** | 1. Navigate to **Inventory → Purchase Returns**<br>2. Create return entries against purchases |
 | **Notes** | Supports return number, date, reason, return method, status tracking. |
 
-#### 4. Production Entry
+#### 4. Production Entry - Extrusion
 
 | Field | Details |
 |-------|---------|
-| **Requirement** | Production batch entry with employee, shift, quantity |
-| **Status** | ✅ Completed |
+| **Requirement** | Production batch entry with shift in-charge, operator, employee list |
+| **Status** | 🟡 Partially Completed |
 | **Verification Steps** | 1. Navigate to **Production → Production Entry**<br>2. Create production batches |
-| **Notes** | Records batch number, date, employee, finished good, quantity produced, shift, status, notes. |
+| **Missing Fields** | Shift In-charge, Shift Operator, Shift Employees list |
+| **Notes** | Currently records: batch number, date, single employee, finished good, quantity produced, shift, status, notes. |
 
 #### 5. Material Consumption Entry
 
@@ -174,7 +262,16 @@ This document provides a detailed comparison between the requirements specified 
 | **Verification Steps** | 1. Navigate to **Production → Wastage**<br>2. Record wastage with reasons |
 | **Notes** | Links to batches and finished goods, supports wastage reason documentation. |
 
-#### 9. Customer Order Entry
+#### 9. Damages Entry
+
+| Field | Details |
+|-------|---------|
+| **Requirement** | Damaged stock entry as separate module (distinct from Wastage) |
+| **Status** | ⏳ Pending |
+| **Verification Steps** | Not yet implemented |
+| **Notes** | Currently combined with wastage. Requirement specifies separate module for damages tracking. |
+
+#### 10. Customer Order Entry
 
 | Field | Details |
 |-------|---------|
@@ -183,7 +280,7 @@ This document provides a detailed comparison between the requirements specified 
 | **Verification Steps** | 1. Navigate to **Sales → Customer Orders**<br>2. Create orders with multiple line items |
 | **Notes** | Supports order number, customer, expected delivery, status, line items with finished goods. |
 
-#### 10. Sales Invoice Entry
+#### 11. Sales Invoice Entry
 
 | Field | Details |
 |-------|---------|
@@ -192,7 +289,7 @@ This document provides a detailed comparison between the requirements specified 
 | **Verification Steps** | 1. Navigate to **Sales → Sales Invoices**<br>2. Create invoices against orders |
 | **Notes** | Includes subtotal, GST amount, total amount, paid amount tracking. |
 
-#### 11. Delivery Entry
+#### 12. Delivery Entry
 
 | Field | Details |
 |-------|---------|
@@ -201,7 +298,7 @@ This document provides a detailed comparison between the requirements specified 
 | **Verification Steps** | 1. Navigate to **Sales → Deliveries**<br>2. Record deliveries with vehicle and driver details |
 | **Notes** | Links to invoices, tracks vehicle, driver name, delivery status. |
 
-#### 12. Sales Return Entry
+#### 13. Sales Return Entry
 
 | Field | Details |
 |-------|---------|
@@ -210,7 +307,7 @@ This document provides a detailed comparison between the requirements specified 
 | **Verification Steps** | 1. Navigate to **Sales → Sales Returns**<br>2. Record returns against invoices |
 | **Notes** | Supports return number, date, reason, return method, handled by employee. |
 
-#### 13. Collection Entry
+#### 14. Collection Entry
 
 | Field | Details |
 |-------|---------|
@@ -219,7 +316,7 @@ This document provides a detailed comparison between the requirements specified 
 | **Verification Steps** | 1. Navigate to **Finance → Collections**<br>2. Record customer payments |
 | **Notes** | Supports payment number, customer, invoice, amount, payment mode, reference number. |
 
-#### 14. Payment Entry
+#### 15. Payment Entry
 
 | Field | Details |
 |-------|---------|
@@ -228,7 +325,7 @@ This document provides a detailed comparison between the requirements specified 
 | **Verification Steps** | 1. Navigate to **Finance → Payments**<br>2. Record supplier payments |
 | **Notes** | Links to purchases, supports multiple payment modes. |
 
-#### 15. Attendance Entry
+#### 16. Attendance Entry
 
 | Field | Details |
 |-------|---------|
@@ -237,7 +334,7 @@ This document provides a detailed comparison between the requirements specified 
 | **Verification Steps** | 1. Navigate to **HR → Attendance**<br>2. Record daily attendance |
 | **Notes** | Supports date, employee, shift, in time, out time, status, notes. |
 
-#### 16. Marketing Visit Entry
+#### 17. Marketing Visit Entry
 
 | Field | Details |
 |-------|---------|
@@ -246,7 +343,25 @@ This document provides a detailed comparison between the requirements specified 
 | **Verification Steps** | 1. Navigate to **HR → Marketing Visits**<br>2. Record visit details |
 | **Notes** | Tracks employee, customer, place, person met, entry/exit time, contact, remarks. |
 
-#### 17. Petty Cash Entry
+#### 18. Marketing Attendance Entry
+
+| Field | Details |
+|-------|---------|
+| **Requirement** | Marketing attendance with punch-in/punch-out synchronization |
+| **Status** | ⏳ Pending |
+| **Verification Steps** | Not yet implemented |
+| **Notes** | Requires mobile GPS punch-in/punch-out with location tracking and time synchronization. |
+
+#### 19. Telemarketing Call Details Entry
+
+| Field | Details |
+|-------|---------|
+| **Requirement** | Telemarketing call logging with customer, call outcome, follow-up |
+| **Status** | ⏳ Pending |
+| **Verification Steps** | Not yet implemented |
+| **Notes** | New module for tracking telemarketing activities. |
+
+#### 20. Petty Cash Entry
 
 | Field | Details |
 |-------|---------|
@@ -263,9 +378,10 @@ This document provides a detailed comparison between the requirements specified 
 
 | Field | Details |
 |-------|---------|
-| **Requirement** | Reports for all master data |
+| **Requirement** | Reports for all master data with PDF export |
 | **Status** | 🟡 Partially Completed |
 | **Verification Steps** | 1. Navigate to each Masters page<br>2. Use DataTable search and view features |
+| **Missing** | PDF export for all masters |
 | **Notes** | DataTables with search available for all masters. Dedicated report pages with export pending. |
 
 #### 2. Purchase Report
@@ -331,6 +447,33 @@ This document provides a detailed comparison between the requirements specified 
 | **Verification Steps** | 1. Navigate to **Reports → Scorecard**<br>2. View KPI metrics |
 | **Notes** | Displays key business metrics and trends. |
 
+#### 9. Telemarketing Call Report
+
+| Field | Details |
+|-------|---------|
+| **Requirement** | Telemarketing activity and call outcome report |
+| **Status** | ⏳ Pending |
+| **Verification Steps** | Not yet implemented |
+| **Notes** | Depends on Telemarketing Call Entry module. |
+
+#### 10. Marketing Attendance with Punching Report
+
+| Field | Details |
+|-------|---------|
+| **Requirement** | Marketing attendance with GPS punch-in/punch-out details |
+| **Status** | ⏳ Pending |
+| **Verification Steps** | Not yet implemented |
+| **Notes** | Depends on Marketing Attendance Entry with punch synchronization. |
+
+#### 11. Damaged Stock Report
+
+| Field | Details |
+|-------|---------|
+| **Requirement** | Damaged stock report (separate from wastage) |
+| **Status** | ⏳ Pending |
+| **Verification Steps** | Not yet implemented |
+| **Notes** | Depends on separate Damages Entry module. |
+
 ---
 
 ## II. KEIL OPERATIONS (Bio-Medical Waste Management)
@@ -341,10 +484,10 @@ This document provides a detailed comparison between the requirements specified 
 
 | Field | Details |
 |-------|---------|
-| **Requirement** | Branch/Zone master data |
-| **Status** | 🟡 Partially Completed |
-| **Verification Steps** | Branch field exists in Routes table |
-| **Notes** | Branch is a field within Routes. Standalone Branch master pending. |
+| **Requirement** | Standalone Branch/Zone master data |
+| **Status** | ⏳ Pending |
+| **Verification Steps** | Branch field exists in Routes table only |
+| **Notes** | Branch is currently a field within Routes. Standalone Branch master with code, name, address, contact required. |
 
 #### 2. Routes Master
 
@@ -372,6 +515,15 @@ This document provides a detailed comparison between the requirements specified 
 | **Status** | ✅ Completed |
 | **Verification Steps** | 1. Navigate to **KEIL Operations → HCE Details**<br>2. Assign route to each HCE |
 | **Notes** | Route assignment is a field in HCE master via route_id foreign key. |
+
+#### 5. Expense Heads Master
+
+| Field | Details |
+|-------|---------|
+| **Requirement** | Expense categories/heads master for KEIL operations |
+| **Status** | ⏳ Pending |
+| **Verification Steps** | Not yet implemented |
+| **Notes** | Required for Expense Entry module. |
 
 ---
 
@@ -403,6 +555,33 @@ This document provides a detailed comparison between the requirements specified 
 | **Status** | ✅ Completed |
 | **Verification Steps** | 1. Navigate to **HR → Attendance**<br>2. Record attendance for drivers/helpers |
 | **Notes** | Uses same attendance module as manufacturing. |
+
+#### 4. Vehicle Travel Details Entry
+
+| Field | Details |
+|-------|---------|
+| **Requirement** | Detailed vehicle travel log with route, KM, trips |
+| **Status** | ⏳ Pending |
+| **Verification Steps** | Not yet implemented |
+| **Notes** | Separate from Daily Collection for non-collection trips. |
+
+#### 5. Expense Entry
+
+| Field | Details |
+|-------|---------|
+| **Requirement** | Expense recording against expense heads |
+| **Status** | ⏳ Pending |
+| **Verification Steps** | Not yet implemented |
+| **Notes** | Depends on Expense Heads Master. |
+
+#### 6. Vehicle Repair & Maintenance Entry
+
+| Field | Details |
+|-------|---------|
+| **Requirement** | Vehicle repair and maintenance tracking with cost, vendor |
+| **Status** | ⏳ Pending |
+| **Verification Steps** | Not yet implemented |
+| **Notes** | Should track repair type, cost, vendor, parts replaced, next service date. |
 
 ---
 
@@ -443,6 +622,51 @@ This document provides a detailed comparison between the requirements specified 
 | **Status** | ✅ Completed |
 | **Verification Steps** | 1. Navigate to **Reports → KEIL Collection Report**<br>2. View "Fuel Analytics" tab |
 | **Notes** | Shows fuel cost by vehicle, consumption trends, efficiency metrics (km/L, cost/km). Additional feature beyond requirements. |
+
+#### 5. Route Map Report
+
+| Field | Details |
+|-------|---------|
+| **Requirement** | Route visualization on map with HCE locations |
+| **Status** | ⏳ Pending |
+| **Verification Steps** | Not yet implemented |
+| **Notes** | Requires geo-visualization integration (e.g., Google Maps, Leaflet). |
+
+#### 6. HCE Service Ledger
+
+| Field | Details |
+|-------|---------|
+| **Requirement** | HCE-wise service history and ledger |
+| **Status** | ⏳ Pending |
+| **Verification Steps** | Not yet implemented |
+| **Notes** | Historical collection records per HCE with billing details. |
+
+#### 7. Vehicle Maintenance Report
+
+| Field | Details |
+|-------|---------|
+| **Requirement** | Vehicle maintenance history and cost report |
+| **Status** | ⏳ Pending |
+| **Verification Steps** | Not yet implemented |
+| **Notes** | Depends on Vehicle Repair & Maintenance Entry. |
+
+#### 8. Branch-wise Attendance Report
+
+| Field | Details |
+|-------|---------|
+| **Requirement** | Attendance report filtered by branch |
+| **Status** | ⏳ Pending |
+| **Verification Steps** | Not yet implemented |
+| **Notes** | Depends on standalone Branch Master. |
+
+#### 9. Expenditure Report
+
+| Field | Details |
+|-------|---------|
+| **Requirement** | Expense report by head, branch, period |
+| **Status** | ⏳ Pending |
+| **Verification Steps** | Not yet implemented |
+| **Notes** | Depends on Expense Heads Master and Expense Entry. |
 
 ---
 
@@ -506,16 +730,25 @@ This document provides a detailed comparison between the requirements specified 
 
 ### A. Masters
 
-#### 1. Employees Master
+#### 1. Branch Master
 
 | Field | Details |
 |-------|---------|
-| **Requirement** | SMS Employee management |
-| **Status** | ✅ Completed |
-| **Verification Steps** | 1. Navigate to **Masters → Employees**<br>2. Filter by SMS department |
-| **Notes** | Uses shared Employees master. |
+| **Requirement** | SMS-specific Branch master |
+| **Status** | ⏳ Pending |
+| **Verification Steps** | Not yet implemented |
+| **Notes** | Separate branch management for SMS operations. |
 
-#### 2. Vehicles Master
+#### 2. Employees Master
+
+| Field | Details |
+|-------|---------|
+| **Requirement** | SMS-specific Employee management |
+| **Status** | 🟡 Partially Completed |
+| **Verification Steps** | 1. Navigate to **Masters → Employees**<br>2. Filter by SMS department |
+| **Notes** | Uses shared Employees master. SMS-specific fields (work category, supervisor assignment) pending. |
+
+#### 3. Vehicles Master
 
 | Field | Details |
 |-------|---------|
@@ -524,7 +757,7 @@ This document provides a detailed comparison between the requirements specified 
 | **Verification Steps** | 1. Navigate to **Masters → Vehicles**<br>2. Filter by SMS purpose |
 | **Notes** | Uses shared Vehicles master with purpose field. |
 
-#### 3. Routes Master
+#### 4. Routes Master
 
 | Field | Details |
 |-------|---------|
@@ -533,7 +766,7 @@ This document provides a detailed comparison between the requirements specified 
 | **Verification Steps** | Not yet implemented |
 | **Notes** | Requires separate SMS routes table or route type field. |
 
-#### 4. Collection Points Master
+#### 5. Collection Points Master
 
 | Field | Details |
 |-------|---------|
@@ -553,14 +786,15 @@ This document provides a detailed comparison between the requirements specified 
 | **Verification Steps** | 1. Navigate to **SMS Contracts** (sidebar)<br>2. Basic page structure exists |
 | **Notes** | Page exists but full entry form pending. Route exists at /sms-contracts. |
 
-#### 2. Attendance Entry
+#### 2. Detailed Attendance Entry
 
 | Field | Details |
 |-------|---------|
-| **Requirement** | Worker attendance tracking |
-| **Status** | ✅ Completed |
-| **Verification Steps** | 1. Navigate to **HR → Attendance**<br>2. Record attendance for SMS workers |
-| **Notes** | Uses shared Attendance module. |
+| **Requirement** | Attendance with Shift, Supervisor, Work Category, OT tracking |
+| **Status** | ⏳ Pending |
+| **Verification Steps** | Not yet implemented |
+| **Missing Fields** | Shift assignment, Supervisor, Work Category, OT hours, OT rate |
+| **Notes** | Current attendance module lacks SMS-specific fields. |
 
 #### 3. Fuel Entry
 
@@ -575,9 +809,24 @@ This document provides a detailed comparison between the requirements specified 
 
 | Requirement | Status | Notes |
 |-------------|--------|-------|
+| SMS Attendance Report | ⏳ Pending | With shift, supervisor, OT details |
 | Collection Report | 🟡 Partially Completed | Basic page exists |
 | Vehicle Report | ⏳ Pending | Not implemented |
 | Route Performance Report | ⏳ Pending | Not implemented |
+
+---
+
+## VI. SYSTEM-WIDE FEATURES (Cross-Module Requirements)
+
+| Feature | Status | Priority | Notes |
+|---------|--------|----------|-------|
+| Shift Management Module | ⏳ Pending | High | Define shifts, assign employees, track shift-wise data |
+| Expense Management Module | ⏳ Pending | High | Expense heads, entry, approval workflow, reports |
+| Vehicle Repair & Maintenance Tracking | ⏳ Pending | Medium | Repair log, maintenance schedule, cost tracking |
+| Telemarketing Module | ⏳ Pending | Medium | Call logging, outcomes, follow-up, reports |
+| Punch-in/Punch-out Mobile Sync | ⏳ Pending | Medium | GPS location, time sync, mobile app or PWA |
+| PDF Export for Reports | ⏳ Pending | High | All reports should export to PDF |
+| Route Map & Geo-visualization (KEIL) | ⏳ Pending | Low | Map integration for route visualization |
 
 ---
 
@@ -605,7 +854,7 @@ The following features have been implemented beyond the original requirements:
 1. **Shared Masters:** Employees, Vehicles, and some other masters are shared across all modules (Manufacturing, KEIL, SMS).
 2. **Authentication Required:** All entry and report pages require user login.
 3. **Role Permissions:** Super Admin has full access; Viewer role is read-only.
-4. **Single Database:** All modules use the same Supabase database with proper RLS policies.
+4. **Single Database:** All modules use the same database with proper RLS policies.
 
 ### Limitations
 
@@ -614,37 +863,47 @@ The following features have been implemented beyond the original requirements:
 3. **Bulk Import:** No Excel/CSV import functionality.
 4. **Mobile App:** Web-only, no native mobile apps.
 5. **Multi-language:** English only.
+6. **Punch-in/Punch-out:** No mobile GPS synchronization.
+7. **Geo-visualization:** No map integration for route visualization.
 
 ### Deviations from Requirements
 
 1. **Branch Master:** Implemented as a field in Routes rather than separate master.
 2. **HCE Collection Items:** Entry available through Daily Collection form, dedicated HCE-wise entry pending.
 3. **Contract Separation:** GJM and Aryaja contracts not yet separated from main KEIL module.
+4. **Damages vs Wastage:** Currently combined into single Wastage module.
+5. **Employee Fields:** Minimal fields implemented; many required fields missing.
+6. **Vehicle Fields:** Engine, chassis, owner details not captured.
 
 ---
 
 ## Priority Recommendations
 
-### High Priority (Next Sprint)
+### High Priority (Immediate)
 
-1. Implement GJM Contract module
-2. Implement Aryaja Contract module
-3. Add HCE-wise collection item entry
-4. PDF export for reports
+1. **Extend Employee Master** - Add missing personal, qualification, guarantor, license fields
+2. **Extend Vehicle Master** - Add engine, chassis, owner, seating details
+3. **PDF Export** - Implement PDF export for all reports
+4. **Standalone Branch Master** - Create separate branch management
+5. **Expense Management Module** - Expense heads, entry, reports
 
-### Medium Priority
+### Medium Priority (Next Sprint)
 
-1. SMS Contract full implementation
-2. Master data export functionality
-3. Dashboard customization
-4. Notification system
+1. **Telemarketing Module** - Call entry and reporting
+2. **Damages Entry** - Separate from wastage
+3. **Vehicle Maintenance Tracking** - Repair log and maintenance schedule
+4. **GJM Contract Module** - Full implementation
+5. **Aryaja Contract Module** - Full implementation
+6. **SMS Contract Completion** - Routes, attendance with OT, reports
 
-### Low Priority
+### Low Priority (Future)
 
-1. Multi-language support
-2. Bulk data import
-3. Advanced analytics
-4. API documentation
+1. **Route Map Visualization** - Map integration for KEIL routes
+2. **Punch-in/Punch-out Sync** - Mobile GPS integration
+3. **Multi-language Support** - Hindi, regional languages
+4. **Bulk Data Import** - Excel/CSV import
+5. **Advanced Analytics** - Predictive insights
+6. **API Documentation** - External integrations
 
 ---
 
@@ -653,6 +912,7 @@ The following features have been implemented beyond the original requirements:
 | Version | Date | Author | Changes |
 |---------|------|--------|---------|
 | 1.0 | January 9, 2026 | System | Initial document creation |
+| 2.0 | January 9, 2026 | System | Added detailed gap analysis with missing fields per master, updated completion percentages, added system-wide features section, updated priority recommendations |
 
 ---
 
