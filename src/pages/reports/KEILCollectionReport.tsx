@@ -23,7 +23,7 @@ import {
 } from "@/components/ui/table";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from "recharts";
 import { format, startOfMonth, endOfMonth } from "date-fns";
-import { FileDown, Filter, TrendingUp, Weight, Package, Route, Building2, User, Truck } from "lucide-react";
+import { FileDown, Filter, TrendingUp, Weight, Package, Route, Building2, User, Truck, Fuel } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const COLORS = ['hsl(var(--primary))', 'hsl(var(--secondary))', 'hsl(var(--accent))', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4'];
@@ -110,6 +110,24 @@ export default function KEILCollectionReport() {
       return (data || []) as any[];
     },
     enabled: collections.length > 0 || startDate !== '' || endDate !== ''
+  });
+
+  // Fetch fuel consumption data
+  const { data: fuelData = [] } = useQuery({
+    queryKey: ['fuel-report', startDate, endDate],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('fuel_consumption' as any)
+        .select(`
+          *,
+          vehicle:vehicle_id(registration_number)
+        `)
+        .gte('fuel_date', startDate)
+        .lte('fuel_date', endDate)
+        .order('fuel_date', { ascending: false });
+      if (error) throw error;
+      return (data || []) as any[];
+    }
   });
 
   // Calculate summary stats
@@ -280,6 +298,58 @@ export default function KEILCollectionReport() {
     return (insuranceDate && insuranceDate <= thirtyDaysFromNow) || (fitnessDate && fitnessDate <= thirtyDaysFromNow);
   }).length;
 
+  // Fuel analytics
+  const totalFuelLiters = fuelData.reduce((sum: number, f: any) => sum + (f.quantity_liters || 0), 0);
+  const totalFuelCost = fuelData.reduce((sum: number, f: any) => sum + (f.total_amount || 0), 0);
+  const avgFuelEfficiency = totalKm > 0 && totalFuelLiters > 0 ? (totalKm / totalFuelLiters).toFixed(2) : 0;
+
+  // Fuel by vehicle
+  const fuelByVehicle = fuelData.reduce((acc: any[], f: any) => {
+    const vehicleReg = f.vehicle?.registration_number || 'Unknown';
+    const existing = acc.find(v => v.vehicle === vehicleReg);
+    if (existing) {
+      existing.liters += f.quantity_liters || 0;
+      existing.cost += f.total_amount || 0;
+      existing.entries += 1;
+    } else {
+      acc.push({
+        vehicle: vehicleReg,
+        liters: f.quantity_liters || 0,
+        cost: f.total_amount || 0,
+        entries: 1
+      });
+    }
+    return acc;
+  }, []).sort((a, b) => b.cost - a.cost);
+
+  // Fuel by date for trend
+  const fuelByDate = fuelData.reduce((acc: any[], f: any) => {
+    const date = f.fuel_date;
+    const existing = acc.find(d => d.date === date);
+    if (existing) {
+      existing.liters += f.quantity_liters || 0;
+      existing.cost += f.total_amount || 0;
+    } else {
+      acc.push({
+        date,
+        liters: f.quantity_liters || 0,
+        cost: f.total_amount || 0
+      });
+    }
+    return acc;
+  }, []).sort((a, b) => a.date.localeCompare(b.date));
+
+  // Combine vehicle performance with fuel data
+  const vehicleWithFuel = vehicleWiseData.map(v => {
+    const fuel = fuelByVehicle.find(f => f.vehicle === v.vehicle);
+    return {
+      ...v,
+      fuelLiters: fuel?.liters || 0,
+      fuelCost: fuel?.cost || 0,
+      efficiency: fuel?.liters > 0 ? (v.km / fuel.liters).toFixed(2) : '-'
+    };
+  });
+
   const handleExport = () => {
     const csvContent = [
       ['Date', 'Collection No', 'Route', 'Vehicle', 'Driver', 'Helper', 'Total Weight (kg)', 'Total Bags', 'Start KM', 'End KM', 'Status'].join(','),
@@ -435,13 +505,14 @@ export default function KEILCollectionReport() {
           </Card>
         </div>
 
-        {/* Tabs for Route-wise, HCE-wise, Driver and Vehicle Analytics */}
+        {/* Tabs for Route-wise, HCE-wise, Driver, Vehicle and Fuel Analytics */}
         <Tabs defaultValue="routes" className="space-y-6">
           <TabsList className="flex-wrap">
             <TabsTrigger value="routes">Route Analytics</TabsTrigger>
             <TabsTrigger value="hce">HCE Analytics</TabsTrigger>
             <TabsTrigger value="driver">Driver Performance</TabsTrigger>
             <TabsTrigger value="vehicle">Vehicle Performance</TabsTrigger>
+            <TabsTrigger value="fuel">Fuel Analytics</TabsTrigger>
             <TabsTrigger value="details">Collection Details</TabsTrigger>
           </TabsList>
 
@@ -1145,6 +1216,222 @@ export default function KEILCollectionReport() {
                       <TableRow>
                         <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
                           No vehicle data available for the selected period
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Fuel Analytics Tab */}
+          <TabsContent value="fuel" className="space-y-6">
+            {/* Fuel Summary Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <Card>
+                <CardContent className="pt-6">
+                  <div className="flex items-center gap-4">
+                    <div className="p-3 bg-primary/10 rounded-lg">
+                      <Fuel className="h-6 w-6 text-primary" />
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">Total Fuel</p>
+                      <p className="text-2xl font-bold">{totalFuelLiters.toFixed(1)} L</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent className="pt-6">
+                  <div className="flex items-center gap-4">
+                    <div className="p-3 bg-secondary/10 rounded-lg">
+                      <Weight className="h-6 w-6 text-secondary" />
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">Total Cost</p>
+                      <p className="text-2xl font-bold">₹{totalFuelCost.toFixed(0)}</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent className="pt-6">
+                  <div className="flex items-center gap-4">
+                    <div className="p-3 bg-accent/10 rounded-lg">
+                      <Route className="h-6 w-6 text-accent-foreground" />
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">Total KM</p>
+                      <p className="text-2xl font-bold">{totalKm.toFixed(0)} km</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent className="pt-6">
+                  <div className="flex items-center gap-4">
+                    <div className="p-3 bg-green-500/10 rounded-lg">
+                      <TrendingUp className="h-6 w-6 text-green-500" />
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">Avg Efficiency</p>
+                      <p className="text-2xl font-bold">{avgFuelEfficiency} km/L</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Fuel Cost by Vehicle */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Fuel Cost by Vehicle (₹)</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="h-[350px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={fuelByVehicle.slice(0, 10)} layout="vertical">
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis type="number" />
+                        <YAxis dataKey="vehicle" type="category" width={100} tick={{ fontSize: 11 }} />
+                        <Tooltip 
+                          contentStyle={{ 
+                            backgroundColor: 'hsl(var(--card))', 
+                            border: '1px solid hsl(var(--border))',
+                            borderRadius: '8px'
+                          }}
+                          formatter={(value: number) => [`₹${value.toFixed(2)}`, 'Cost']}
+                        />
+                        <Bar dataKey="cost" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Fuel Consumption by Vehicle */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Fuel Consumption by Vehicle (Liters)</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="h-[350px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={fuelByVehicle.filter(v => v.liters > 0).slice(0, 8)}
+                          dataKey="liters"
+                          nameKey="vehicle"
+                          cx="50%"
+                          cy="50%"
+                          outerRadius={100}
+                          label={({ vehicle, percent }) => `${vehicle.slice(-6)}: ${(percent * 100).toFixed(0)}%`}
+                          labelLine={false}
+                        >
+                          {fuelByVehicle.slice(0, 8).map((_, index) => (
+                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                          ))}
+                        </Pie>
+                        <Tooltip 
+                          contentStyle={{ 
+                            backgroundColor: 'hsl(var(--card))', 
+                            border: '1px solid hsl(var(--border))',
+                            borderRadius: '8px'
+                          }} 
+                        />
+                        <Legend />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Fuel Cost Trend */}
+              <Card className="lg:col-span-2">
+                <CardHeader>
+                  <CardTitle>Daily Fuel Consumption Trend</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="h-[300px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={fuelByDate}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis 
+                          dataKey="date" 
+                          tick={{ fontSize: 11 }} 
+                          tickFormatter={(value) => format(new Date(value), 'dd MMM')}
+                        />
+                        <YAxis yAxisId="left" orientation="left" />
+                        <YAxis yAxisId="right" orientation="right" />
+                        <Tooltip 
+                          contentStyle={{ 
+                            backgroundColor: 'hsl(var(--card))', 
+                            border: '1px solid hsl(var(--border))',
+                            borderRadius: '8px'
+                          }}
+                          labelFormatter={(value) => format(new Date(value), 'dd MMM yyyy')}
+                        />
+                        <Bar yAxisId="left" dataKey="liters" name="Liters" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+                        <Bar yAxisId="right" dataKey="cost" name="Cost (₹)" fill="hsl(var(--secondary))" radius={[4, 4, 0, 0]} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Vehicle Fuel Efficiency Table */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Vehicle Fuel Efficiency Summary</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Vehicle</TableHead>
+                      <TableHead className="text-right">Trips</TableHead>
+                      <TableHead className="text-right">KM Traveled</TableHead>
+                      <TableHead className="text-right">Fuel (L)</TableHead>
+                      <TableHead className="text-right">Fuel Cost (₹)</TableHead>
+                      <TableHead className="text-right">Efficiency (km/L)</TableHead>
+                      <TableHead className="text-right">Cost/KM (₹)</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {vehicleWithFuel.map((row, index) => (
+                      <TableRow key={index}>
+                        <TableCell className="font-medium">{row.vehicle}</TableCell>
+                        <TableCell className="text-right">{row.trips}</TableCell>
+                        <TableCell className="text-right">{row.km.toFixed(1)}</TableCell>
+                        <TableCell className="text-right">{row.fuelLiters.toFixed(1)}</TableCell>
+                        <TableCell className="text-right">₹{row.fuelCost.toFixed(0)}</TableCell>
+                        <TableCell className="text-right">
+                          <span className={`px-2 py-1 rounded-full text-xs ${
+                            parseFloat(row.efficiency) >= 4 
+                              ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100'
+                              : parseFloat(row.efficiency) >= 2.5
+                                ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-100'
+                                : row.efficiency === '-' 
+                                  ? 'bg-muted text-muted-foreground'
+                                  : 'bg-destructive/20 text-destructive'
+                          }`}>
+                            {row.efficiency}
+                          </span>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {row.km > 0 && row.fuelCost > 0 
+                            ? `₹${(row.fuelCost / row.km).toFixed(2)}`
+                            : '-'}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                    {vehicleWithFuel.length === 0 && (
+                      <TableRow>
+                        <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
+                          No fuel data available for the selected period
                         </TableCell>
                       </TableRow>
                     )}

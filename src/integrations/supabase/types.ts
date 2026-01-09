@@ -483,6 +483,62 @@ export type Database = {
         }
         Relationships: []
       }
+      fuel_consumption: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          fuel_date: string
+          fuel_station: string | null
+          fuel_type: string | null
+          id: string
+          notes: string | null
+          odometer_reading: number | null
+          price_per_liter: number
+          quantity_liters: number
+          receipt_number: string | null
+          total_amount: number
+          vehicle_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          fuel_date?: string
+          fuel_station?: string | null
+          fuel_type?: string | null
+          id?: string
+          notes?: string | null
+          odometer_reading?: number | null
+          price_per_liter: number
+          quantity_liters: number
+          receipt_number?: string | null
+          total_amount: number
+          vehicle_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          fuel_date?: string
+          fuel_station?: string | null
+          fuel_type?: string | null
+          id?: string
+          notes?: string | null
+          odometer_reading?: number | null
+          price_per_liter?: number
+          quantity_liters?: number
+          receipt_number?: string | null
+          total_amount?: number
+          vehicle_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fuel_consumption_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       keil_collection_items: {
         Row: {
           bags_count: number | null
