@@ -23,7 +23,7 @@ import {
 } from "@/components/ui/table";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from "recharts";
 import { format, startOfMonth, endOfMonth } from "date-fns";
-import { FileDown, Filter, TrendingUp, Weight, Package, Route, Building2 } from "lucide-react";
+import { FileDown, Filter, TrendingUp, Weight, Package, Route, Building2, User } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const COLORS = ['hsl(var(--primary))', 'hsl(var(--secondary))', 'hsl(var(--accent))', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4'];
@@ -212,6 +212,31 @@ export default function KEILCollectionReport() {
     return acc;
   }, []);
 
+  // Driver performance analytics
+  const driverWiseData = collections.reduce((acc: any[], collection) => {
+    const driverName = collection.driver?.name || 'Unknown';
+    const kmRun = Math.max(0, (collection.end_km || 0) - (collection.start_km || 0));
+    const existing = acc.find(d => d.driver === driverName);
+    if (existing) {
+      existing.trips += 1;
+      existing.weight += collection.total_weight || 0;
+      existing.bags += collection.total_bags || 0;
+      existing.km += kmRun;
+    } else {
+      acc.push({
+        driver: driverName,
+        trips: 1,
+        weight: collection.total_weight || 0,
+        bags: collection.total_bags || 0,
+        km: kmRun
+      });
+    }
+    return acc;
+  }, []).sort((a, b) => b.weight - a.weight);
+
+  const totalDrivers = driverWiseData.filter(d => d.driver !== 'Unknown').length;
+  const totalKm = collections.reduce((sum, c) => sum + Math.max(0, (c.end_km || 0) - (c.start_km || 0)), 0);
+
   const handleExport = () => {
     const csvContent = [
       ['Date', 'Collection No', 'Route', 'Vehicle', 'Driver', 'Helper', 'Total Weight (kg)', 'Total Bags', 'Start KM', 'End KM', 'Status'].join(','),
@@ -367,11 +392,12 @@ export default function KEILCollectionReport() {
           </Card>
         </div>
 
-        {/* Tabs for Route-wise and HCE-wise Analytics */}
+        {/* Tabs for Route-wise, HCE-wise, and Driver Analytics */}
         <Tabs defaultValue="routes" className="space-y-6">
           <TabsList>
             <TabsTrigger value="routes">Route Analytics</TabsTrigger>
             <TabsTrigger value="hce">HCE Analytics</TabsTrigger>
+            <TabsTrigger value="driver">Driver Performance</TabsTrigger>
             <TabsTrigger value="details">Collection Details</TabsTrigger>
           </TabsList>
 
@@ -677,6 +703,185 @@ export default function KEILCollectionReport() {
                       <TableRow>
                         <TableCell colSpan={4} className="text-center text-muted-foreground py-8">
                           No data available
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Driver Performance Tab */}
+          <TabsContent value="driver" className="space-y-6">
+            {/* Driver Summary Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <Card>
+                <CardContent className="pt-6">
+                  <div className="flex items-center gap-4">
+                    <div className="p-3 bg-primary/10 rounded-lg">
+                      <User className="h-6 w-6 text-primary" />
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">Active Drivers</p>
+                      <p className="text-2xl font-bold">{totalDrivers}</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent className="pt-6">
+                  <div className="flex items-center gap-4">
+                    <div className="p-3 bg-secondary/10 rounded-lg">
+                      <Route className="h-6 w-6 text-secondary" />
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">Total KM Traveled</p>
+                      <p className="text-2xl font-bold">{totalKm.toFixed(1)} km</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent className="pt-6">
+                  <div className="flex items-center gap-4">
+                    <div className="p-3 bg-accent/10 rounded-lg">
+                      <TrendingUp className="h-6 w-6 text-accent-foreground" />
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">Avg KM/Trip</p>
+                      <p className="text-2xl font-bold">{totalTrips > 0 ? (totalKm / totalTrips).toFixed(1) : 0} km</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Driver-wise Weight Bar Chart */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Driver-wise Collection (Weight in kg)</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="h-[350px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={driverWiseData.slice(0, 10)} layout="vertical">
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis type="number" />
+                        <YAxis dataKey="driver" type="category" width={100} tick={{ fontSize: 11 }} />
+                        <Tooltip 
+                          contentStyle={{ 
+                            backgroundColor: 'hsl(var(--card))', 
+                            border: '1px solid hsl(var(--border))',
+                            borderRadius: '8px'
+                          }} 
+                        />
+                        <Bar dataKey="weight" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Driver-wise Trips Pie Chart */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Trips Distribution by Driver</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="h-[350px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={driverWiseData.slice(0, 8)}
+                          dataKey="trips"
+                          nameKey="driver"
+                          cx="50%"
+                          cy="50%"
+                          outerRadius={100}
+                          label={({ driver, percent }) => `${driver.split(' ')[0]}: ${(percent * 100).toFixed(0)}%`}
+                          labelLine={false}
+                        >
+                          {driverWiseData.slice(0, 8).map((_, index) => (
+                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                          ))}
+                        </Pie>
+                        <Tooltip 
+                          contentStyle={{ 
+                            backgroundColor: 'hsl(var(--card))', 
+                            border: '1px solid hsl(var(--border))',
+                            borderRadius: '8px'
+                          }} 
+                        />
+                        <Legend />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Driver-wise KM Chart */}
+              <Card className="lg:col-span-2">
+                <CardHeader>
+                  <CardTitle>Kilometers Traveled by Driver</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="h-[300px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={driverWiseData}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="driver" tick={{ fontSize: 11 }} />
+                        <YAxis />
+                        <Tooltip 
+                          contentStyle={{ 
+                            backgroundColor: 'hsl(var(--card))', 
+                            border: '1px solid hsl(var(--border))',
+                            borderRadius: '8px'
+                          }} 
+                        />
+                        <Bar dataKey="km" name="KM Traveled" fill="hsl(var(--secondary))" radius={[4, 4, 0, 0]} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Driver Performance Summary Table */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Driver Performance Summary</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Driver Name</TableHead>
+                      <TableHead className="text-right">Total Trips</TableHead>
+                      <TableHead className="text-right">Total Weight (kg)</TableHead>
+                      <TableHead className="text-right">Total Bags</TableHead>
+                      <TableHead className="text-right">KM Traveled</TableHead>
+                      <TableHead className="text-right">Avg Weight/Trip</TableHead>
+                      <TableHead className="text-right">Avg KM/Trip</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {driverWiseData.map((row, index) => (
+                      <TableRow key={index}>
+                        <TableCell className="font-medium">{row.driver}</TableCell>
+                        <TableCell className="text-right">{row.trips}</TableCell>
+                        <TableCell className="text-right">{row.weight.toFixed(2)}</TableCell>
+                        <TableCell className="text-right">{row.bags}</TableCell>
+                        <TableCell className="text-right">{row.km.toFixed(1)}</TableCell>
+                        <TableCell className="text-right">{(row.weight / row.trips).toFixed(2)}</TableCell>
+                        <TableCell className="text-right">{(row.km / row.trips).toFixed(1)}</TableCell>
+                      </TableRow>
+                    ))}
+                    {driverWiseData.length === 0 && (
+                      <TableRow>
+                        <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
+                          No driver data available for the selected period
                         </TableCell>
                       </TableRow>
                     )}
