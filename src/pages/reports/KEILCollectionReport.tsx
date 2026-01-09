@@ -23,7 +23,7 @@ import {
 } from "@/components/ui/table";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from "recharts";
 import { format, startOfMonth, endOfMonth } from "date-fns";
-import { FileDown, Filter, TrendingUp, Weight, Package, Route, Building2, User } from "lucide-react";
+import { FileDown, Filter, TrendingUp, Weight, Package, Route, Building2, User, Truck } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const COLORS = ['hsl(var(--primary))', 'hsl(var(--secondary))', 'hsl(var(--accent))', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4'];
@@ -56,7 +56,7 @@ export default function KEILCollectionReport() {
         .select(`
           *,
           route:keil_routes(route_name, route_code, area),
-          vehicle:vehicles(registration_number),
+          vehicle:vehicles(id, registration_number, vehicle_type, insurance_expiry, fitness_expiry, status),
           driver:employees!keil_collections_driver_id_fkey(name),
           helper:employees!keil_collections_helper_id_fkey(name)
         `)
@@ -237,6 +237,49 @@ export default function KEILCollectionReport() {
   const totalDrivers = driverWiseData.filter(d => d.driver !== 'Unknown').length;
   const totalKm = collections.reduce((sum, c) => sum + Math.max(0, (c.end_km || 0) - (c.start_km || 0)), 0);
 
+  // Vehicle performance analytics
+  const vehicleWiseData = collections.reduce((acc: any[], collection) => {
+    const vehicleReg = collection.vehicle?.registration_number || 'Unknown';
+    const vehicleType = collection.vehicle?.vehicle_type || 'Unknown';
+    const vehicleId = collection.vehicle?.id;
+    const insuranceExpiry = collection.vehicle?.insurance_expiry;
+    const fitnessExpiry = collection.vehicle?.fitness_expiry;
+    const vehicleStatus = collection.vehicle?.status || 'unknown';
+    const kmRun = Math.max(0, (collection.end_km || 0) - (collection.start_km || 0));
+    
+    const existing = acc.find(v => v.vehicle === vehicleReg);
+    if (existing) {
+      existing.trips += 1;
+      existing.weight += collection.total_weight || 0;
+      existing.bags += collection.total_bags || 0;
+      existing.km += kmRun;
+    } else {
+      acc.push({
+        vehicle: vehicleReg,
+        vehicleId,
+        vehicleType,
+        insuranceExpiry,
+        fitnessExpiry,
+        vehicleStatus,
+        trips: 1,
+        weight: collection.total_weight || 0,
+        bags: collection.total_bags || 0,
+        km: kmRun
+      });
+    }
+    return acc;
+  }, []).sort((a, b) => b.trips - a.trips);
+
+  const totalVehicles = vehicleWiseData.filter(v => v.vehicle !== 'Unknown').length;
+  const today = new Date();
+  const vehiclesNeedingAttention = vehicleWiseData.filter(v => {
+    if (!v.insuranceExpiry && !v.fitnessExpiry) return false;
+    const insuranceDate = v.insuranceExpiry ? new Date(v.insuranceExpiry) : null;
+    const fitnessDate = v.fitnessExpiry ? new Date(v.fitnessExpiry) : null;
+    const thirtyDaysFromNow = new Date(today.getTime() + 30 * 24 * 60 * 60 * 1000);
+    return (insuranceDate && insuranceDate <= thirtyDaysFromNow) || (fitnessDate && fitnessDate <= thirtyDaysFromNow);
+  }).length;
+
   const handleExport = () => {
     const csvContent = [
       ['Date', 'Collection No', 'Route', 'Vehicle', 'Driver', 'Helper', 'Total Weight (kg)', 'Total Bags', 'Start KM', 'End KM', 'Status'].join(','),
@@ -392,12 +435,13 @@ export default function KEILCollectionReport() {
           </Card>
         </div>
 
-        {/* Tabs for Route-wise, HCE-wise, and Driver Analytics */}
+        {/* Tabs for Route-wise, HCE-wise, Driver and Vehicle Analytics */}
         <Tabs defaultValue="routes" className="space-y-6">
-          <TabsList>
+          <TabsList className="flex-wrap">
             <TabsTrigger value="routes">Route Analytics</TabsTrigger>
             <TabsTrigger value="hce">HCE Analytics</TabsTrigger>
             <TabsTrigger value="driver">Driver Performance</TabsTrigger>
+            <TabsTrigger value="vehicle">Vehicle Performance</TabsTrigger>
             <TabsTrigger value="details">Collection Details</TabsTrigger>
           </TabsList>
 
@@ -882,6 +926,225 @@ export default function KEILCollectionReport() {
                       <TableRow>
                         <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
                           No driver data available for the selected period
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Vehicle Performance Tab */}
+          <TabsContent value="vehicle" className="space-y-6">
+            {/* Vehicle Summary Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <Card>
+                <CardContent className="pt-6">
+                  <div className="flex items-center gap-4">
+                    <div className="p-3 bg-primary/10 rounded-lg">
+                      <Truck className="h-6 w-6 text-primary" />
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">Active Vehicles</p>
+                      <p className="text-2xl font-bold">{totalVehicles}</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent className="pt-6">
+                  <div className="flex items-center gap-4">
+                    <div className="p-3 bg-secondary/10 rounded-lg">
+                      <Route className="h-6 w-6 text-secondary" />
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">Avg KM/Vehicle</p>
+                      <p className="text-2xl font-bold">{totalVehicles > 0 ? (totalKm / totalVehicles).toFixed(1) : 0} km</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent className="pt-6">
+                  <div className="flex items-center gap-4">
+                    <div className={`p-3 rounded-lg ${vehiclesNeedingAttention > 0 ? 'bg-destructive/10' : 'bg-green-500/10'}`}>
+                      <TrendingUp className={`h-6 w-6 ${vehiclesNeedingAttention > 0 ? 'text-destructive' : 'text-green-500'}`} />
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">Needs Attention</p>
+                      <p className="text-2xl font-bold">{vehiclesNeedingAttention}</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Vehicle-wise Trips Bar Chart */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Vehicle-wise Trips</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="h-[350px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={vehicleWiseData.slice(0, 10)} layout="vertical">
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis type="number" />
+                        <YAxis dataKey="vehicle" type="category" width={100} tick={{ fontSize: 11 }} />
+                        <Tooltip 
+                          contentStyle={{ 
+                            backgroundColor: 'hsl(var(--card))', 
+                            border: '1px solid hsl(var(--border))',
+                            borderRadius: '8px'
+                          }} 
+                        />
+                        <Bar dataKey="trips" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Vehicle Mileage Pie Chart */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Mileage Distribution by Vehicle</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="h-[350px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={vehicleWiseData.filter(v => v.km > 0).slice(0, 8)}
+                          dataKey="km"
+                          nameKey="vehicle"
+                          cx="50%"
+                          cy="50%"
+                          outerRadius={100}
+                          label={({ vehicle, percent }) => `${vehicle.slice(-6)}: ${(percent * 100).toFixed(0)}%`}
+                          labelLine={false}
+                        >
+                          {vehicleWiseData.slice(0, 8).map((_, index) => (
+                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                          ))}
+                        </Pie>
+                        <Tooltip 
+                          contentStyle={{ 
+                            backgroundColor: 'hsl(var(--card))', 
+                            border: '1px solid hsl(var(--border))',
+                            borderRadius: '8px'
+                          }} 
+                        />
+                        <Legend />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Vehicle KM Chart */}
+              <Card className="lg:col-span-2">
+                <CardHeader>
+                  <CardTitle>Kilometers Traveled by Vehicle</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="h-[300px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={vehicleWiseData}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="vehicle" tick={{ fontSize: 10 }} angle={-45} textAnchor="end" height={80} />
+                        <YAxis />
+                        <Tooltip 
+                          contentStyle={{ 
+                            backgroundColor: 'hsl(var(--card))', 
+                            border: '1px solid hsl(var(--border))',
+                            borderRadius: '8px'
+                          }} 
+                        />
+                        <Bar dataKey="km" name="KM Traveled" fill="hsl(var(--secondary))" radius={[4, 4, 0, 0]} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Vehicle Performance Summary Table */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Vehicle Performance Summary</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Vehicle</TableHead>
+                      <TableHead>Type</TableHead>
+                      <TableHead className="text-right">Total Trips</TableHead>
+                      <TableHead className="text-right">Total Weight (kg)</TableHead>
+                      <TableHead className="text-right">KM Traveled</TableHead>
+                      <TableHead className="text-right">Avg KM/Trip</TableHead>
+                      <TableHead>Insurance</TableHead>
+                      <TableHead>Fitness</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {vehicleWiseData.map((row, index) => {
+                      const insuranceDate = row.insuranceExpiry ? new Date(row.insuranceExpiry) : null;
+                      const fitnessDate = row.fitnessExpiry ? new Date(row.fitnessExpiry) : null;
+                      const thirtyDaysFromNow = new Date(today.getTime() + 30 * 24 * 60 * 60 * 1000);
+                      const insuranceExpired = insuranceDate && insuranceDate < today;
+                      const insuranceExpiringSoon = insuranceDate && insuranceDate <= thirtyDaysFromNow && insuranceDate >= today;
+                      const fitnessExpired = fitnessDate && fitnessDate < today;
+                      const fitnessExpiringSoon = fitnessDate && fitnessDate <= thirtyDaysFromNow && fitnessDate >= today;
+                      
+                      return (
+                        <TableRow key={index}>
+                          <TableCell className="font-medium">{row.vehicle}</TableCell>
+                          <TableCell>
+                            <span className="px-2 py-1 rounded-full text-xs bg-muted capitalize">
+                              {row.vehicleType}
+                            </span>
+                          </TableCell>
+                          <TableCell className="text-right">{row.trips}</TableCell>
+                          <TableCell className="text-right">{row.weight.toFixed(2)}</TableCell>
+                          <TableCell className="text-right">{row.km.toFixed(1)}</TableCell>
+                          <TableCell className="text-right">{(row.km / row.trips).toFixed(1)}</TableCell>
+                          <TableCell>
+                            {insuranceDate ? (
+                              <span className={`px-2 py-1 rounded-full text-xs ${
+                                insuranceExpired 
+                                  ? 'bg-destructive/20 text-destructive' 
+                                  : insuranceExpiringSoon 
+                                    ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-100'
+                                    : 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100'
+                              }`}>
+                                {format(insuranceDate, 'dd MMM yyyy')}
+                              </span>
+                            ) : '-'}
+                          </TableCell>
+                          <TableCell>
+                            {fitnessDate ? (
+                              <span className={`px-2 py-1 rounded-full text-xs ${
+                                fitnessExpired 
+                                  ? 'bg-destructive/20 text-destructive' 
+                                  : fitnessExpiringSoon 
+                                    ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-100'
+                                    : 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100'
+                              }`}>
+                                {format(fitnessDate, 'dd MMM yyyy')}
+                              </span>
+                            ) : '-'}
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                    {vehicleWiseData.length === 0 && (
+                      <TableRow>
+                        <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
+                          No vehicle data available for the selected period
                         </TableCell>
                       </TableRow>
                     )}
