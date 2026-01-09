@@ -71,6 +71,7 @@ const navigation = [
       { title: 'Purchases', href: '/inventory/purchases' },
       { title: 'Purchase Returns', href: '/inventory/purchase-returns' },
       { title: 'Stock Report', href: '/inventory/stock' },
+      { title: 'Fuel Consumption', href: '/inventory/fuel' },
     ],
   },
   {

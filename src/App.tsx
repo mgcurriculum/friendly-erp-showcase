@@ -30,6 +30,7 @@ import PurchaseOrders from "./pages/inventory/PurchaseOrders";
 import Purchases from "./pages/inventory/Purchases";
 import PurchaseReturns from "./pages/inventory/PurchaseReturns";
 import StockReport from "./pages/inventory/StockReport";
+import FuelConsumption from "./pages/inventory/FuelConsumption";
 import Collections from "./pages/finance/Collections";
 import Payments from "./pages/finance/Payments";
 import PettyCash from "./pages/finance/PettyCash";
@@ -79,6 +80,7 @@ const App = () => (
             <Route path="/inventory/purchases" element={<Purchases />} />
             <Route path="/inventory/purchase-returns" element={<PurchaseReturns />} />
             <Route path="/inventory/stock" element={<StockReport />} />
+            <Route path="/inventory/fuel" element={<FuelConsumption />} />
             {/* Sales */}
             <Route path="/sales/orders" element={<CustomerOrders />} />
             <Route path="/sales/invoices" element={<SalesInvoices />} />
